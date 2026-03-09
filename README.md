@@ -49,7 +49,10 @@ To use SleepFi you need **one of these apps** installed on your Android device t
 **Requirements:**
 - Android 9+ (Health Connect minimum)
 - Health Connect app installed (pre-installed on Android 14+, downloadable for older versions)
+- A wearable that tracks sleep — smartwatch, smart ring (Oura, Galaxy Watch, Garmin, Fitbit, Whoop, etc.) or a phone-based tracker (Samsung Health with phone on the bed)
 - At least one sleep-tracking app connected to Health Connect
+
+> No wearable = no data = streak broken. Keep your device charged.
 
 ---
 
