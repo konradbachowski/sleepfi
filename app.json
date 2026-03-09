@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "SleepFi",
+    "slug": "sleepfi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "sleepfi",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d1520"
+    },
+    "platforms": ["android", "web"],
+    "android": {
+      "package": "com.heyneuron.sleepfi",
+      "adaptiveIcon": {
+        "backgroundColor": "#0d1520",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "permissions": [
+        "android.permission.health.READ_SLEEP"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26,
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34
+          }
+        }
+      ],
+      "react-native-health-connect"
+    ]
+  }
+}

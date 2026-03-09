@@ -1,0 +1,86 @@
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8081';
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+export async function apiGet<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`);
+  if (!res.ok) throw new Error(`API error ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+export interface User {
+  id: string;
+  wallet_address: string;
+  created_at: string;
+}
+
+export interface Challenge {
+  id: string;
+  user_id: string;
+  goal_hours: number;
+  duration_days: number;
+  stake_lamports: number;
+  stake_tx_signature: string;
+  status: 'active' | 'completed' | 'failed';
+  started_at: string;
+  ends_at: string;
+  streak: number;
+  days_logged: number;
+  sleep_records: SleepRecord[] | null;
+}
+
+export interface SleepRecord {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  duration_hours: number;
+  source: 'manual' | 'health_connect';
+  met_goal: boolean;
+  created_at: string;
+}
+
+export async function getOrCreateUser(walletAddress: string): Promise<User> {
+  return apiPost('/api/users', { walletAddress });
+}
+
+export async function createChallenge(data: {
+  userId: string;
+  goalHours: number;
+  durationDays: number;
+  stakeLamports: number;
+  stakeTxSignature: string;
+}): Promise<Challenge> {
+  return apiPost('/api/challenges', data);
+}
+
+export async function getActiveChallenge(userId: string): Promise<Challenge | null> {
+  try {
+    return await apiGet(`/api/challenges?userId=${userId}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function logSleep(data: {
+  userId: string;
+  challengeId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  durationHours: number;
+  source: 'manual' | 'health_connect';
+  goalHours: number;
+}): Promise<SleepRecord> {
+  return apiPost('/api/sleep', data);
+}

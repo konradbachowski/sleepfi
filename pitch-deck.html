@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1280">
+  <title>SleepFi — Pitch Deck</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1520;
+      --yellow: #fcc231;
+      --white: #f0f4f8;
+      --gray: #6b7a8d;
+      --card: #141e2e;
+      --green: #34d399;
+      --border: #1e2d42;
+    }
+
+    html, body {
+      width: 1280px;
+      height: 720px;
+      overflow: hidden;
+      background: #000;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .deck {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0; left: 0;
+      width: 1280px;
+      height: 720px;
+      background: var(--bg);
+      display: none;
+      color: var(--white);
+      overflow: hidden;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    /* --- NAVIGATION --- */
+    .nav {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, background 0.2s;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--yellow);
+      background: #1a2638;
+    }
+
+    .nav-dots {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: var(--yellow);
+      transform: scale(1.4);
+    }
+
+    /* --- SLIDE COUNTER --- */
+    .slide-counter {
+      position: fixed;
+      top: 28px;
+      right: 36px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--gray);
+      z-index: 100;
+      letter-spacing: 0.05em;
+    }
+
+    .slide-counter span {
+      color: var(--white);
+      font-weight: 500;
+    }
+
+    /* --- BRAND TAG --- */
+    .brand-tag {
+      position: fixed;
+      top: 28px;
+      left: 36px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .brand-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--yellow);
+    }
+
+    .brand-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      color: var(--yellow);
+      letter-spacing: 0.06em;
+    }
+
+    /* =============================================
+       SLIDE 1 — PROBLEM
+       ============================================= */
+    #slide-1 {
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .s1-left {
+      width: 520px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 60px 80px 72px;
+      position: relative;
+    }
+
+    .s1-left::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 15%;
+      height: 70%;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .slide-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--yellow);
+      margin-bottom: 24px;
+    }
+
+    .s1-big-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 140px;
+      line-height: 1;
+      color: var(--yellow);
+      letter-spacing: -4px;
+    }
+
+    .s1-big-label {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--white);
+      margin-top: 12px;
+      line-height: 1.4;
+    }
+
+    .s1-big-sub {
+      font-size: 15px;
+      color: var(--gray);
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+
+    .s1-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 72px 80px 72px;
+      gap: 0;
+    }
+
+    .s1-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      line-height: 1.25;
+      color: var(--white);
+      margin-bottom: 48px;
+      max-width: 520px;
+    }
+
+    .s1-title em {
+      color: var(--yellow);
+      font-style: normal;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .stat-card:last-child { margin-bottom: 0; }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      color: var(--yellow);
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+
+    .stat-value.green { color: var(--green); }
+
+    .stat-desc {
+      font-size: 14px;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    .stat-desc strong {
+      display: block;
+      color: var(--white);
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    /* =============================================
+       SLIDE 2 — SOLUTION
+       ============================================= */
+    #slide-2 {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .s2-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .s2-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 72px;
+      color: var(--yellow);
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .s2-subtitle {
+      font-size: 18px;
+      color: var(--gray);
+      margin-top: 14px;
+      font-weight: 400;
+    }
+
+    .s2-subtitle strong {
+      color: var(--white);
+      font-weight: 500;
+    }
+
+    .steps-row {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      width: 900px;
+    }
+
+    .step {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0;
+      padding: 36px 32px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step:first-child {
+      border-radius: 16px 0 0 16px;
+    }
+
+    .step:last-child {
+      border-radius: 0 16px 16px 0;
+    }
+
+    .step-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      color: var(--gray);
+      letter-spacing: 0.1em;
+    }
+
+    .step-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(252, 194, 49, 0.12);
+      border: 1px solid rgba(252, 194, 49, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 4px;
+    }
+
+    .step-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      color: var(--white);
+    }
+
+    .step-desc {
+      font-size: 14px;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+
+    .step-arrow {
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      color: var(--yellow);
+      font-size: 16px;
+    }
+
+    .step-highlight {
+      margin-top: auto;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      color: var(--yellow);
+    }
+
+    /* =============================================
+       SLIDE 3 — HOW IT WORKS
+       ============================================= */
+    #slide-3 {
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .s3-left {
+      width: 560px;
+      flex-shrink: 0;
+      padding: 72px 60px 72px 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    .s3-left::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 10%;
+      height: 80%;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .s3-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 36px;
+      line-height: 1.2;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .s3-subtitle {
+      font-size: 14px;
+      color: var(--gray);
+      margin-bottom: 40px;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+      position: relative;
+    }
+
+    .flow-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 34px;
+      width: 1px;
+      height: calc(100% - 4px);
+      background: var(--border);
+    }
+
+    .flow-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      color: var(--yellow);
+    }
+
+    .flow-dot.danger {
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+
+    .flow-content {
+      padding-top: 4px;
+    }
+
+    .flow-main {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--white);
+      line-height: 1.4;
+    }
+
+    .flow-sub {
+      font-size: 12px;
+      color: var(--gray);
+      margin-top: 2px;
+    }
+
+    .s3-right {
+      flex: 1;
+      padding: 72px 72px 72px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .s3-right-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 28px;
+    }
+
+    .tech-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tech-chip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .chip-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(252, 194, 49, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .chip-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--white);
+    }
+
+    .chip-sub {
+      font-size: 12px;
+      color: var(--gray);
+      margin-top: 1px;
+    }
+
+    /* =============================================
+       SLIDE 4 — MARKET
+       ============================================= */
+    #slide-4 {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 72px;
+    }
+
+    .s4-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 38px;
+      text-align: center;
+      color: var(--white);
+      margin-bottom: 56px;
+      max-width: 780px;
+      line-height: 1.25;
+    }
+
+    .s4-title em {
+      color: var(--yellow);
+      font-style: normal;
+    }
+
+    .market-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .market-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 30px;
+    }
+
+    .market-card.highlight {
+      border-color: rgba(252, 194, 49, 0.3);
+      background: rgba(252, 194, 49, 0.05);
+    }
+
+    .market-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 36px;
+      color: var(--yellow);
+      margin-bottom: 8px;
+    }
+
+    .market-value.green { color: var(--green); }
+
+    .market-label {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+
+    .market-desc {
+      font-size: 13px;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    /* =============================================
+       SLIDE 5 — CTA
+       ============================================= */
+    #slide-5 {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .s5-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      padding: 72px;
+    }
+
+    .s5-tag {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--yellow);
+      margin-bottom: 20px;
+    }
+
+    .s5-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 72px;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 16px;
+      letter-spacing: -2px;
+    }
+
+    .s5-title span {
+      color: var(--yellow);
+    }
+
+    .s5-tagline {
+      font-size: 18px;
+      color: var(--gray);
+      margin-bottom: 56px;
+    }
+
+    .s5-cards {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .s5-info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 28px;
+      text-align: left;
+      min-width: 220px;
+    }
+
+    .s5-card-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 6px;
+    }
+
+    .s5-card-value {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--white);
+      line-height: 1.4;
+    }
+
+    .s5-cta-bar {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 36px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .s5-cta-left {
+      flex: 1;
+      text-align: left;
+    }
+
+    .s5-cta-label {
+      font-size: 11px;
+      color: var(--gray);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .s5-cta-wallet {
+      font-family: 'DM Sans', monospace;
+      font-size: 13px;
+      color: var(--yellow);
+      letter-spacing: 0.04em;
+    }
+
+    .s5-cta-divider {
+      width: 1px;
+      height: 40px;
+      background: var(--border);
+    }
+
+    .s5-cta-right {
+      text-align: left;
+    }
+
+    .s5-github {
+      font-size: 13px;
+      color: var(--gray);
+    }
+
+    .s5-github strong {
+      color: var(--white);
+      font-weight: 500;
+    }
+
+    .s5-built {
+      font-size: 12px;
+      color: var(--gray);
+      margin-top: 6px;
+    }
+
+    .s5-built strong {
+      color: var(--green);
+    }
+
+    /* bg glow */
+    .glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    .glow-yellow {
+      width: 400px;
+      height: 400px;
+      background: rgba(252, 194, 49, 0.06);
+    }
+
+    .glow-green {
+      width: 300px;
+      height: 300px;
+      background: rgba(52, 211, 153, 0.05);
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- BRAND + COUNTER overlay -->
+  <div class="brand-tag">
+    <div class="brand-dot"></div>
+    <div class="brand-name">SleepFi</div>
+  </div>
+
+  <div class="slide-counter">
+    <span id="counter-current">1</span> / 5
+  </div>
+
+  <!-- ==========================
+       SLIDE 1 — PROBLEM
+       ========================== -->
+  <div class="slide active" id="slide-1">
+    <div class="glow glow-yellow" style="top:-80px;left:-80px;"></div>
+
+    <div class="s1-left">
+      <div class="slide-label">The Problem</div>
+      <div class="s1-big-number">35%</div>
+      <div class="s1-big-label">of adults sleep less<br>than 7 hours a night</div>
+      <div class="s1-big-sub">Source: CDC, 2023 Sleep Health Report</div>
+    </div>
+
+    <div class="s1-right">
+      <div class="s1-title">
+        "Humans Sleep Poorly.<br>
+        Nobody <em>Rewards</em> Them<br>
+        For Trying."
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-value">$411B</div>
+        <div class="stat-desc">
+          <strong>Annual cost of sleep deprivation</strong>
+          United States alone — lost productivity, healthcare, accidents (RAND Corporation)
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-value">3.5B</div>
+        <div class="stat-desc">
+          <strong>People globally sleep fewer than 7 hours</strong>
+          A health crisis at scale with no behavioral incentive layer
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-value green">0</div>
+        <div class="stat-desc">
+          <strong>Apps that pay you to sleep better</strong>
+          Move-to-Earn exists. Learn-to-Earn exists. Sleep-to-Earn — does not.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================
+       SLIDE 2 — SOLUTION
+       ========================== -->
+  <div class="slide" id="slide-2">
+    <div class="glow glow-yellow" style="top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;"></div>
+
+    <div class="s2-header">
+      <div class="slide-label">The Solution</div>
+      <div class="s2-logo">SleepFi</div>
+      <div class="s2-subtitle">
+        <strong>Stake SOL on your sleep.</strong> Hit your goal. Earn rewards.
+      </div>
+    </div>
+
+    <div class="steps-row">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="#fcc231" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2m0-8a9 9 0 110 18A9 9 0 0112 3z"/>
+          </svg>
+        </div>
+        <div class="step-title">Stake SOL</div>
+        <div class="step-desc">
+          Connect your Phantom or Solflare wallet via Mobile Wallet Adapter. Commit 0.1 SOL minimum — skin in the game, on-chain.
+        </div>
+        <div class="step-highlight">Minimum: 0.1 SOL</div>
+
+        <div class="step-arrow">&#8250;</div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="#fcc231" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </div>
+        <div class="step-title">Sleep 7h+</div>
+        <div class="step-desc">
+          Each morning, log your sleep via Android Health Connect API — automatic, tamper-resistant. Manual backup available.
+        </div>
+        <div class="step-highlight">7+ hours, 7 nights</div>
+
+        <div class="step-arrow">&#8250;</div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="#34d399" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="step-title">Earn</div>
+        <div class="step-desc">
+          Complete the 7-day challenge. Claim your full stake back plus a 10% bonus from the shared reward pool. On-chain, instant.
+        </div>
+        <div class="step-highlight" style="color:var(--green);">Stake + 10% bonus</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================
+       SLIDE 3 — HOW IT WORKS
+       ========================== -->
+  <div class="slide" id="slide-3">
+
+    <div class="s3-left">
+      <div class="slide-label">Under the Hood</div>
+      <div class="s3-title">Built on<br>Solana Seeker</div>
+      <div class="s3-subtitle">Full on-chain challenge flow, mobile-first</div>
+
+      <div class="flow-step">
+        <div class="flow-dot">1</div>
+        <div class="flow-content">
+          <div class="flow-main">Connect Phantom / Solflare wallet</div>
+          <div class="flow-sub">Mobile Wallet Adapter — one tap, no seed phrase exposure</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-dot">2</div>
+        <div class="flow-content">
+          <div class="flow-main">Set challenge parameters</div>
+          <div class="flow-sub">Goal duration, nightly target, stake amount — written to Neon Postgres</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-dot">3</div>
+        <div class="flow-content">
+          <div class="flow-main">Log sleep each morning</div>
+          <div class="flow-sub">Health Connect API pulls verified sleep data automatically</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-dot" style="border-color:rgba(52,211,153,0.4);color:var(--green);">4</div>
+        <div class="flow-content">
+          <div class="flow-main">Day 7 complete — claim rewards</div>
+          <div class="flow-sub">Stake returned + 10% bonus, on-chain transaction on Devnet</div>
+        </div>
+      </div>
+
+      <div class="flow-step" style="margin-bottom:0;">
+        <div class="flow-dot danger">!</div>
+        <div class="flow-content">
+          <div class="flow-main" style="color:#f87171;">Miss a night</div>
+          <div class="flow-sub">Stake allocated to the shared reward pool for winners</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="s3-right">
+      <div class="s3-right-label">Tech Stack</div>
+
+      <div class="tech-chips">
+        <div class="tech-chip">
+          <div class="chip-icon">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fcc231" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="chip-label">Mobile Wallet Adapter</div>
+            <div class="chip-sub">Solana MWA — deep link wallet auth on Android</div>
+          </div>
+        </div>
+
+        <div class="tech-chip">
+          <div class="chip-icon">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fcc231" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="chip-label">Health Connect API</div>
+            <div class="chip-sub">Android sleep data — verified, tamper-resistant</div>
+          </div>
+        </div>
+
+        <div class="tech-chip">
+          <div class="chip-icon">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fcc231" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+            </svg>
+          </div>
+          <div>
+            <div class="chip-label">Neon Postgres</div>
+            <div class="chip-sub">Serverless Postgres for challenge state and user data</div>
+          </div>
+        </div>
+
+        <div class="tech-chip">
+          <div class="chip-icon">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fcc231" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+            </svg>
+          </div>
+          <div>
+            <div class="chip-label">Expo React Native</div>
+            <div class="chip-sub">Cross-platform mobile, Seeker-ready APK build</div>
+          </div>
+        </div>
+
+        <div class="tech-chip">
+          <div class="chip-icon">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fcc231" stroke-width="2">
+              <circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 6v6l3 3"/>
+            </svg>
+          </div>
+          <div>
+            <div class="chip-label">Devnet SOL</div>
+            <div class="chip-sub">On-chain stake / reward pool, real transaction flow</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================
+       SLIDE 4 — MARKET
+       ========================== -->
+  <div class="slide" id="slide-4">
+    <div class="glow glow-green" style="bottom:-60px;right:-60px;"></div>
+
+    <div class="s4-title">
+      Move-to-Earn <em>proved the model.</em><br>Sleep is <em>4x bigger.</em>
+    </div>
+
+    <div class="market-grid">
+      <div class="market-card highlight">
+        <div class="market-value">27k</div>
+        <div class="market-label">Moonwalk — Move-to-Earn benchmark</div>
+        <div class="market-desc">27,000 downloads in the first 30 days. Proved that crypto-native users will change behavior for on-chain rewards.</div>
+      </div>
+
+      <div class="market-card highlight">
+        <div class="market-value">4x</div>
+        <div class="market-label">Sleep vs. daily walking time</div>
+        <div class="market-desc">Average adult sleeps 7.5 hours vs. walks ~30 min per day. Sleep is the largest consistent human behavior — never monetized.</div>
+      </div>
+
+      <div class="market-card">
+        <div class="market-value green">$5.9B</div>
+        <div class="market-label">Sleep tracking market by 2030</div>
+        <div class="market-desc">Growing from $2.1B today. Consumer demand for sleep improvement is accelerating — no on-chain product exists yet.</div>
+      </div>
+
+      <div class="market-card">
+        <div class="market-value">Seeker</div>
+        <div class="market-label">Perfect distribution channel</div>
+        <div class="market-desc">Seeker target audience: crypto-native, health-conscious early adopters. SleepFi is the first product built specifically for this intersection.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================
+       SLIDE 5 — CTA
+       ========================== -->
+  <div class="slide" id="slide-5">
+    <div class="glow glow-yellow" style="top:-100px;left:50%;transform:translateX(-50%);width:700px;height:700px;opacity:0.7;"></div>
+
+    <div class="s5-inner">
+      <div class="s5-tag">Solana Seeker Hackathon 2026</div>
+
+      <div class="s5-title">
+        Sleep your way<br>to <span>alpha.</span>
+      </div>
+
+      <div class="s5-tagline">
+        SleepFi — the first Sleep-to-Earn app on Solana
+      </div>
+
+      <div class="s5-cards">
+        <div class="s5-info-card">
+          <div class="s5-card-label">Track</div>
+          <div class="s5-card-value">Solana Seeker</div>
+        </div>
+        <div class="s5-info-card">
+          <div class="s5-card-label">Built by</div>
+          <div class="s5-card-value">HeyNeuron<br><span style="font-size:12px;color:var(--gray);">Agentive software studio, Krakow</span></div>
+        </div>
+        <div class="s5-info-card">
+          <div class="s5-card-label">Build time</div>
+          <div class="s5-card-value" style="color:var(--green);">Under 9 hours</div>
+        </div>
+        <div class="s5-info-card">
+          <div class="s5-card-label">Stack</div>
+          <div class="s5-card-value" style="font-size:13px;">Expo + MWA + Neon</div>
+        </div>
+      </div>
+
+      <div class="s5-cta-bar">
+        <div class="s5-cta-left">
+          <div class="s5-cta-label">Treasury / Reward Pool Wallet</div>
+          <div class="s5-cta-wallet">Brdg78coo8Z5qv6bmxYwGBfEgfP8fJ8nrPj7iek7y6eE &nbsp;·&nbsp; Devnet · 2 SOL funded</div>
+        </div>
+        <div class="s5-cta-divider"></div>
+        <div class="s5-cta-right">
+          <div class="s5-github">
+            <strong>github.com/konradbachowski/sleepfi</strong><br>
+            <span>Open source, MIT license</span>
+          </div>
+          <div class="s5-built">Built with <strong>Expo + MWA + Health Connect + Neon</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAVIGATION -->
+<nav class="nav">
+  <button class="nav-btn" id="prev-btn" onclick="changeSlide(-1)">&#8249;</button>
+  <div class="nav-dots" id="nav-dots"></div>
+  <button class="nav-btn" id="next-btn" onclick="changeSlide(1)">&#8250;</button>
+</nav>
+
+<script>
+  const TOTAL = 5;
+  let current = 0;
+
+  const slides = document.querySelectorAll('.slide');
+  const dotsContainer = document.getElementById('nav-dots');
+  const counter = document.getElementById('counter-current');
+
+  // Build dots
+  for (let i = 0; i < TOTAL; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    dotsContainer.appendChild(dot);
+  }
+
+  function goTo(idx) {
+    slides[current].classList.remove('active');
+    dotsContainer.children[current].classList.remove('active');
+    current = (idx + TOTAL) % TOTAL;
+    slides[current].classList.add('active');
+    dotsContainer.children[current].classList.add('active');
+    counter.textContent = current + 1;
+  }
+
+  function changeSlide(dir) {
+    goTo(current + dir);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+  });
+</script>
+
+</body>
+</html>
