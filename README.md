@@ -2,7 +2,7 @@
 
 > Stake SOL on your sleep. Hit your goal every night. Earn from the pool of people who failed.
 
-Built for the **Solana Seeker hackathon** by [HeyNeuron](https://heyneuron.com).
+**[sleepfi-landing.vercel.app](https://sleepfi-landing.vercel.app)** · [Download APK](https://github.com/konradbachowski/sleepfi/releases/latest) · Built for the **Solana Seeker hackathon** by [HeyNeuron](https://heyneuron.com).
 
 ---
 
