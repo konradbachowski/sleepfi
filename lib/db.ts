@@ -119,7 +119,10 @@ export async function getLeaderboard(limit = 20) {
       u.wallet_address,
       MAX(CAST(streak_data.streak AS INT)) as best_streak,
       COUNT(DISTINCT c.id) as challenges_completed,
-      SUM(c.stake_lamports) FILTER (WHERE c.status = 'completed') as total_staked_lamports
+      SUM(c.stake_lamports) FILTER (WHERE c.status = 'completed') as total_staked_lamports,
+      (SELECT goal_hours FROM challenges c2
+       WHERE c2.user_id = u.id AND c2.status IN ('active', 'completed')
+       ORDER BY c2.started_at DESC LIMIT 1) as goal_hours
     FROM users u
     JOIN challenges c ON c.user_id = u.id
     JOIN LATERAL (

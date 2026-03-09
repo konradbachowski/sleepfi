@@ -1,12 +1,12 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router } from 'expo-router';
-import { Trophy, ArrowLeft, CheckCircle, XCircle } from 'phosphor-react-native';
+import { Trophy, ArrowLeft, CheckCircle, XCircle, PiggyBank } from 'phosphor-react-native';
 import { useChallenge } from '../../hooks/useChallenge';
 import { lamportsToSol } from '../../lib/solana';
-import { claimReward } from '../../lib/api';
+import { claimReward, getPoolStats, PoolStats } from '../../lib/api';
 import { useWallet } from '../../hooks/useWallet';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const BG = '#0d1520';
 const CARD = '#141e2e';
@@ -21,6 +21,12 @@ export default function RewardsScreen() {
   const { challenge } = useChallenge();
   const { walletAddress, user } = useWallet();
   const [claiming, setClaiming] = useState(false);
+  const [pool, setPool] = useState<PoolStats | null>(null);
+
+  useEffect(() => {
+    const stake = challenge ? Number(challenge.stake_lamports) : 0;
+    getPoolStats(stake).then(setPool).catch(() => {});
+  }, [challenge]);
 
   const streak = challenge ? Number(challenge.streak) : 0;
   const totalDays = challenge?.duration_days || 7;
@@ -95,6 +101,22 @@ export default function RewardsScreen() {
               <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
             </View>
           </Animated.View>
+
+          {/* Live pool */}
+          {pool && (
+            <Animated.View entering={FadeInDown.delay(210).springify()} style={styles.poolCard}>
+              <View style={styles.poolRow}>
+                <PiggyBank size={16} color={ACCENT} weight="fill" />
+                <Text style={styles.poolTitle}>Reward Pool</Text>
+                <Text style={styles.poolSol}>{pool.failedPoolSol} SOL</Text>
+              </View>
+              {pool.estimatedBonusSol && parseFloat(pool.estimatedBonusSol) > 0 && (
+                <Text style={styles.poolBonus}>
+                  Your share if you succeed: <Text style={{ color: SUCCESS }}>+{pool.estimatedBonusSol} SOL</Text>
+                </Text>
+              )}
+            </Animated.View>
+          )}
 
           {/* Stake info */}
           <Animated.View entering={FadeInDown.delay(230).springify()} style={styles.stakeCard}>
@@ -202,6 +224,15 @@ const styles = StyleSheet.create({
     borderRadius: 3, overflow: 'hidden',
   },
   progressFill: { height: '100%', backgroundColor: ACCENT, borderRadius: 3 },
+
+  poolCard: {
+    backgroundColor: 'rgba(252,194,49,0.06)', borderRadius: 16,
+    padding: 14, borderWidth: 1, borderColor: 'rgba(252,194,49,0.15)', gap: 6,
+  },
+  poolRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  poolTitle: { fontFamily: 'DMSans_500Medium', fontSize: 14, color: GRAY_L, flex: 1 },
+  poolSol: { fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: ACCENT },
+  poolBonus: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY },
 
   stakeCard: {
     backgroundColor: CARD, borderRadius: 20,

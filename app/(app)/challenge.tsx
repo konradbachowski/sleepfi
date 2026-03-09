@@ -3,13 +3,15 @@ import {
   TextInput, StyleSheet, Alert,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { Lightning, MoonStars, CalendarCheck, ArrowLeft, Wallet, Users } from 'phosphor-react-native';
+import { Lightning, MoonStars, CalendarCheck, ArrowLeft, Wallet, Users, PiggyBank } from 'phosphor-react-native';
+import Slider from '@react-native-community/slider';
 import { useWallet } from '../../hooks/useWallet';
 import { useChallenge } from '../../hooks/useChallenge';
 import { buildStakeTransaction, solToLamports } from '../../lib/solana';
 import { scheduleSleepReminder } from '../../lib/notifications';
+import { getPoolStats, PoolStats } from '../../lib/api';
 import { PublicKey } from '@solana/web3.js';
 
 const BG = '#0d1520';
@@ -18,18 +20,24 @@ const ACCENT = '#fcc231';
 const WHITE = '#f0f4f8';
 const GRAY = '#6b7a8d';
 const GRAY_L = '#9aaabb';
-const SUCCESS = '#34d399';
 
 const TREASURY = process.env.EXPO_PUBLIC_TREASURY_WALLET || 'So1anaTreasuryDevnet11111111111111';
-const GOAL_HOURS = 7; // Fixed — no slider, everyone has the same goal
 
 export default function ChallengeScreen() {
   const { walletAddress, signAndSendTransaction } = useWallet();
   const { startChallenge } = useChallenge();
 
+  const [goalHours, setGoalHours] = useState(7);
   const [durationDays, setDurationDays] = useState(7);
   const [stakeAmount, setStakeAmount] = useState('0.1');
   const [loading, setLoading] = useState(false);
+  const [pool, setPool] = useState<PoolStats | null>(null);
+
+  useEffect(() => {
+    const sol = parseFloat(stakeAmount);
+    const lamports = !isNaN(sol) && sol >= 0.05 ? solToLamports(sol) : 0;
+    getPoolStats(lamports).then(setPool).catch(() => {});
+  }, [stakeAmount]);
 
   const DURATION_OPTIONS = [3, 7, 14];
 
@@ -60,7 +68,7 @@ export default function ChallengeScreen() {
       }
 
       await startChallenge({
-        goalHours: GOAL_HOURS,
+        goalHours,
         durationDays,
         stakeLamports: solToLamports(sol),
         stakeTxSignature: signature,
@@ -86,15 +94,31 @@ export default function ChallengeScreen() {
         <View style={{ width: 40 }} />
       </Animated.View>
 
-      {/* Fixed goal — no slider */}
-      <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.goalCard}>
-        <MoonStars size={18} color={ACCENT} weight="fill" />
-        <View style={styles.goalText}>
-          <Text style={styles.goalTitle}>Sleep Goal</Text>
-          <Text style={styles.goalSub}>Verified via Health Connect only</Text>
+      {/* Goal hours — slider 6.5–9h */}
+      <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.card}>
+        <View style={styles.cardHeader}>
+          <MoonStars size={18} color={ACCENT} weight="fill" />
+          <Text style={styles.cardTitle}>Sleep Goal</Text>
+          <Text style={styles.goalPublicHint}>visible on leaderboard</Text>
         </View>
-        <View style={styles.goalBadge}>
-          <Text style={styles.goalHours}>7h</Text>
+        <View style={styles.valueRow}>
+          <Text style={styles.heroValue}>{goalHours}</Text>
+          <Text style={styles.heroUnit}>hours / night</Text>
+        </View>
+        <Slider
+          style={styles.slider}
+          minimumValue={6.5}
+          maximumValue={9}
+          step={0.5}
+          value={goalHours}
+          onValueChange={setGoalHours}
+          minimumTrackTintColor={ACCENT}
+          maximumTrackTintColor="rgba(255,255,255,0.1)"
+          thumbTintColor={ACCENT}
+        />
+        <View style={styles.sliderLabels}>
+          <Text style={styles.sliderLabel}>6.5h</Text>
+          <Text style={styles.sliderLabel}>9h</Text>
         </View>
       </Animated.View>
 
@@ -139,19 +163,29 @@ export default function ChallengeScreen() {
           />
           <Text style={styles.inputSuffix}>SOL</Text>
         </View>
-        <View style={styles.poolHint}>
-          <Users size={14} color={GRAY} weight="fill" />
-          <Text style={styles.hintText}>
-            Win = stake back + share of failed challengers' pool
-          </Text>
-        </View>
+        {pool && (
+          <View style={styles.poolBox}>
+            <View style={styles.poolRow}>
+              <PiggyBank size={14} color={ACCENT} weight="fill" />
+              <Text style={styles.poolLabel}>Current pool</Text>
+              <Text style={styles.poolValue}>{pool.failedPoolSol} SOL</Text>
+            </View>
+            {pool.estimatedBonusSol && parseFloat(pool.estimatedBonusSol) > 0 && (
+              <View style={styles.poolRow}>
+                <Users size={14} color={GRAY} weight="fill" />
+                <Text style={styles.poolLabel}>Your est. bonus</Text>
+                <Text style={[styles.poolValue, { color: '#34d399' }]}>+{pool.estimatedBonusSol} SOL</Text>
+              </View>
+            )}
+          </View>
+        )}
       </Animated.View>
 
       {/* Summary */}
       <Animated.View entering={FadeInDown.delay(390).springify()} style={styles.summary}>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryKey}>Sleep goal</Text>
-          <Text style={styles.summaryVal}>7h / night (fixed)</Text>
+          <Text style={styles.summaryVal}>{goalHours}h / night</Text>
         </View>
         <View style={styles.separator} />
         <View style={styles.summaryRow}>
@@ -206,27 +240,19 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: 'Syne_700Bold', fontSize: 20, color: WHITE },
 
-  goalCard: {
-    backgroundColor: CARD, borderRadius: 20,
-    padding: 20, borderWidth: 1,
-    borderColor: 'rgba(252,194,49,0.2)',
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-  },
-  goalText: { flex: 1 },
-  goalTitle: { fontFamily: 'DMSans_500Medium', fontSize: 15, color: WHITE },
-  goalSub: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: GRAY, marginTop: 2 },
-  goalBadge: {
-    backgroundColor: 'rgba(252,194,49,0.12)',
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8,
-  },
-  goalHours: { fontFamily: 'Syne_700Bold', fontSize: 22, color: ACCENT },
-
   card: {
     backgroundColor: CARD, borderRadius: 20,
     padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  cardTitle: { fontFamily: 'DMSans_500Medium', fontSize: 14, color: GRAY_L },
+  cardTitle: { fontFamily: 'DMSans_500Medium', fontSize: 14, color: GRAY_L, flex: 1 },
+  goalPublicHint: { fontFamily: 'DMSans_400Regular', fontSize: 11, color: GRAY },
+  valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 12 },
+  heroValue: { fontFamily: 'Syne_700Bold', fontSize: 56, color: ACCENT, lineHeight: 60 },
+  heroUnit: { fontFamily: 'DMSans_400Regular', fontSize: 16, color: GRAY },
+  slider: { width: '100%', height: 40 },
+  sliderLabels: { flexDirection: 'row', justifyContent: 'space-between' },
+  sliderLabel: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: GRAY },
 
   durationRow: { flexDirection: 'row', gap: 10 },
   durationOption: {
@@ -259,8 +285,14 @@ const styles = StyleSheet.create({
     fontFamily: 'JetBrainsMono_400Regular',
     fontSize: 18, color: ACCENT, paddingHorizontal: 16,
   },
-  poolHint: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
-  hintText: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY, flex: 1 },
+  poolBox: {
+    marginTop: 12, backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 12, padding: 12, gap: 8,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+  },
+  poolRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  poolLabel: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY, flex: 1 },
+  poolValue: { fontFamily: 'JetBrainsMono_400Regular', fontSize: 13, color: ACCENT },
 
   summary: {
     backgroundColor: CARD, borderRadius: 20,

@@ -84,6 +84,9 @@ export default function LeaderboardScreen() {
               <Flame size={12} color={ACCENT} weight="fill" />
               <Text style={styles.streakChipText}>{entry.best_streak}d</Text>
             </View>
+            {entry.goal_hours && (
+              <Text style={styles.goalText}>{entry.goal_hours}h goal</Text>
+            )}
             {entry.total_staked_lamports > 0 && (
               <Text style={styles.stakedText}>
                 {lamportsToSol(Number(entry.total_staked_lamports))} SOL
@@ -146,5 +149,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 4,
   },
   streakChipText: { fontFamily: 'Syne_700Bold', fontSize: 13, color: ACCENT },
+  goalText: { fontFamily: 'DMSans_400Regular', fontSize: 11, color: GRAY },
   stakedText: { fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: GRAY },
 });

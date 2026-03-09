@@ -90,6 +90,7 @@ export interface LeaderboardEntry {
   best_streak: number;
   challenges_completed: number;
   total_staked_lamports: number;
+  goal_hours: number | null;
 }
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
@@ -98,6 +99,19 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   } catch {
     return [];
   }
+}
+
+export interface PoolStats {
+  failedPoolLamports: number;
+  failedPoolSol: string;
+  totalActiveStakeLamports: number;
+  totalActiveSol: string;
+  estimatedBonusSol: string | null;
+}
+
+export async function getPoolStats(stakeLamports?: number): Promise<PoolStats> {
+  const query = stakeLamports ? `?stake=${stakeLamports}` : '';
+  return apiGet(`/api/pool${query}`);
 }
 
 export async function claimReward(data: {
