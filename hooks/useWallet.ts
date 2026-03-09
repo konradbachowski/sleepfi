@@ -47,9 +47,15 @@ export function useWallet() {
       session.wallet = address;
       setWalletAddress(address);
 
-      const userData = await getOrCreateUser(address);
-      session.user = userData;
-      setUser(userData);
+      try {
+        const userData = await getOrCreateUser(address);
+        session.user = userData;
+        setUser(userData);
+      } catch {
+        const fallback = { id: address, wallet_address: address } as User;
+        session.user = fallback;
+        setUser(fallback);
+      }
 
       return address;
     } catch (e: any) {
