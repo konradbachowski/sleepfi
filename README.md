@@ -1,6 +1,6 @@
 # SleepFi — Sleep-to-Earn on Solana
 
-> Stake SOL on your sleep. Hit 7h every night. Earn rewards.
+> Stake SOL on your sleep. Hit your goal every night. Earn from the pool of people who failed.
 
 Built for the **Solana Seeker hackathon** by [HeyNeuron](https://heyneuron.com).
 
@@ -9,11 +9,65 @@ Built for the **Solana Seeker hackathon** by [HeyNeuron](https://heyneuron.com).
 ## How It Works
 
 1. **Connect** your Phantom or Solflare wallet (Mobile Wallet Adapter)
-2. **Set a challenge** — goal hours (6–9h), duration (3/7/14 days), stake amount
-3. **Stake SOL** — sent to treasury wallet on devnet via MWA transaction
-4. **Log sleep every morning** — auto-detect via Health Connect or manual time picker
-5. **Complete the challenge** — claim your stake back + 10% bonus
-6. **Miss a night** — stake goes to the reward pool
+2. **Set a challenge** — choose your sleep goal (6.5–9h), duration (3/7/14 days), stake amount (min 0.05 SOL)
+3. **Stake SOL** — locked in an on-chain Anchor program vault (trustless, no one can take it)
+4. **Log sleep every morning** — verified automatically via Health Connect (Android only)
+5. **Complete the challenge** — claim your stake back + proportional share of the reward pool
+6. **Miss a night** — your stake goes to the pool, distributed to winners
+
+### Reward Pool Model
+
+Inspired by Moonwalk. No free bonuses from treasury — rewards come only from other challengers who failed:
+
+- **Win** → stake back + your proportional share of all failed stakes (platform takes 5%)
+- **Fail** → stake goes to the pool for winners
+
+The more people fail, the more winners earn. Aligned incentives.
+
+---
+
+## Sleep Tracking Requirements
+
+**Health Connect is required** — manual entry is not supported (trivially gameable).
+
+To use SleepFi you need **one of these apps** installed on your Android device that writes sleep data to Health Connect:
+
+- Samsung Health (built-in on Samsung devices)
+- Sleep as Android
+- Google Fit
+- Garmin Connect
+- Fitbit
+- Polar Flow
+- Any app that syncs to Android Health Connect
+
+**How a night is counted:**
+- The app reads your longest sleep session between 20:00 yesterday and 12:00 today
+- If duration >= your goal → streak +1, night logged as success
+- If duration < your goal → streak broken, night logged as fail
+- Logs are submitted to the on-chain oracle daily
+
+**Requirements:**
+- Android 9+ (Health Connect minimum)
+- Health Connect app installed (pre-installed on Android 14+, downloadable for older versions)
+- At least one sleep-tracking app connected to Health Connect
+
+---
+
+## On-Chain Architecture
+
+SOL is locked in a **Program Derived Address (PDA) vault** — not a regular wallet. The Anchor program controls when and to whom it's released.
+
+```
+Program ID: 29ZkK7ivpzz6zTEyPh5grfpekJwAmWuueSRDe85xusuc (devnet)
+```
+
+**Instructions:**
+- `initialize_challenge` — user stakes SOL into vault PDA
+- `submit_sleep` — oracle (backend) submits verified Health Connect data on-chain
+- `claim` — user claims vault after successful challenge
+- `forfeit` — anyone can trigger after time expires on a failed challenge
+
+This means: even if HeyNeuron disappears, your SOL is safe in the program vault.
 
 ---
 
@@ -23,10 +77,10 @@ Built for the **Solana Seeker hackathon** by [HeyNeuron](https://heyneuron.com).
 |-------|------|
 | Mobile | Expo 53, React Native, Expo Router |
 | Wallet | `@solana-mobile/mobile-wallet-adapter-protocol` |
-| Chain | Solana devnet, `@solana/web3.js` |
-| Sleep tracking | `react-native-health-connect` (Android) + manual fallback |
-| Database | Neon Postgres (`@neondatabase/serverless`) |
-| Backend | Expo API Routes (serverless) |
+| On-chain | Anchor 0.32, Solana devnet |
+| Sleep tracking | `react-native-health-connect` (Android, Health Connect only) |
+| Oracle/Backend | Expo API Routes (serverless) |
+| Database | Neon Postgres — leaderboard + sleep record history |
 | UI | Reanimated 4, Phosphor icons, custom dark theme |
 | Fonts | Syne 700, DM Sans, JetBrains Mono |
 
@@ -34,11 +88,12 @@ Built for the **Solana Seeker hackathon** by [HeyNeuron](https://heyneuron.com).
 
 ## Screens
 
-- **Welcome** — Connect Wallet with pulsing orb animation
-- **Dashboard** — Streak hero number (breathing animation), sleep bar chart
-- **New Challenge** — Goal/duration sliders, SOL stake input
-- **Log Sleep** — Health Connect auto-detect + manual time picker
-- **Rewards** — Progress tracker, claim button
+- **Welcome** — Connect Wallet (Phantom/Solflare via MWA)
+- **Dashboard** — Streak hero number with breathing animation, weekly sleep bar chart
+- **New Challenge** — Sleep goal slider (6.5–9h, shown publicly on leaderboard), duration, stake
+- **Log Sleep** — Health Connect auto-fetch with refresh button
+- **Rewards** — Live pool display, claim button (on-chain)
+- **Leaderboard** — Top sleepers ranked by streak, goal hours visible
 
 ---
 
@@ -46,8 +101,8 @@ Built for the **Solana Seeker hackathon** by [HeyNeuron](https://heyneuron.com).
 
 ### Prerequisites
 - Node 18+
-- Android device with Phantom or Solflare installed (for MWA)
-- Or Android emulator for UI testing
+- Android device with Phantom or Solflare installed
+- Health Connect + a sleep tracker app on the test device
 
 ### Install
 ```bash
@@ -58,13 +113,13 @@ npm install
 Create `.env.local`:
 ```
 DATABASE_URL=postgresql://...your-neon-connection-string...
-EXPO_PUBLIC_TREASURY_WALLET=your-treasury-wallet-pubkey
+EXPO_PUBLIC_TREASURY_WALLET=your-oracle-wallet-pubkey
+TREASURY_PRIVATE_KEY_BASE64=your-oracle-keypair-base64
 EXPO_PUBLIC_API_URL=http://localhost:8081
 ```
 
 ### Run
 ```bash
-npx expo start          # QR code for Expo Go
 npx expo run:android    # Full native build (required for MWA + Health Connect)
 ```
 
@@ -76,30 +131,13 @@ npx eas build --platform android --profile preview
 
 ---
 
-## Database Schema
-
-Neon Postgres with 3 tables:
-- `users` — wallet address registry
-- `challenges` — active/completed challenges with stake info
-- `sleep_records` — per-night sleep logs with goal tracking
-
----
-
-## Treasury Wallet (Devnet)
+## Treasury / Oracle Wallet (Devnet)
 
 ```
 Brdg78coo8Z5qv6bmxYwGBfEgfP8fJ8nrPj7iek7y6eE
 ```
-Funded with 2 SOL on devnet for testing.
 
----
-
-## Architecture Notes
-
-- MWA is Android-only — web and iOS fallback to mock signatures for development
-- Health Connect requires Android 9+ — manual time picker available as fallback
-- API routes run as Expo serverless functions (not deployed separately)
-- Staking is simplified: SOL goes to treasury, backend tracks and returns after challenge
+Acts as the oracle — signs `submit_sleep` instructions on-chain after verifying Health Connect data.
 
 ---
 
