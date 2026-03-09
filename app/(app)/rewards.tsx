@@ -4,6 +4,9 @@ import { router } from 'expo-router';
 import { Trophy, ArrowLeft, CheckCircle, XCircle } from 'phosphor-react-native';
 import { useChallenge } from '../../hooks/useChallenge';
 import { lamportsToSol } from '../../lib/solana';
+import { claimReward } from '../../lib/api';
+import { useWallet } from '../../hooks/useWallet';
+import { useState } from 'react';
 
 const BG = '#0d1520';
 const CARD = '#141e2e';
@@ -16,6 +19,8 @@ const DANGER = '#f87171';
 
 export default function RewardsScreen() {
   const { challenge } = useChallenge();
+  const { walletAddress, user } = useWallet();
+  const [claiming, setClaiming] = useState(false);
 
   const streak = challenge ? Number(challenge.streak) : 0;
   const totalDays = challenge?.duration_days || 7;
@@ -29,12 +34,29 @@ export default function RewardsScreen() {
     ? (parseFloat(stakedSol) * 0.1).toFixed(4)
     : '0';
 
-  const handleClaim = () => {
-    Alert.alert(
-      'Claim Rewards',
-      `Your ${stakedSol} SOL + ${rewardSol} SOL bonus will be returned to your wallet.\n\nThis feature requires backend treasury automation.`,
-      [{ text: 'OK' }]
-    );
+  const handleClaim = async () => {
+    if (!challenge || !user || !walletAddress) return;
+    setClaiming(true);
+    try {
+      const result = await claimReward({
+        userId: user.id,
+        challengeId: challenge.id,
+        walletAddress,
+      });
+      if (result.success) {
+        Alert.alert(
+          'Rewards Claimed!',
+          `${result.payoutSol} SOL sent to your wallet.\nTx: ${result.signature?.slice(0, 20)}...`,
+          [{ text: 'Sweet', onPress: () => router.replace('/(app)/dashboard') }]
+        );
+      } else {
+        Alert.alert('Challenge Failed', result.message);
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'Failed to claim rewards');
+    } finally {
+      setClaiming(false);
+    }
   };
 
   return (
@@ -125,10 +147,14 @@ export default function RewardsScreen() {
           {/* Claim button */}
           {isComplete && (
             <Animated.View entering={FadeInDown.delay(390).springify()}>
-              <TouchableOpacity style={styles.claimButton} onPress={handleClaim}>
+              <TouchableOpacity
+                style={[styles.claimButton, claiming && { opacity: 0.6 }]}
+                onPress={handleClaim}
+                disabled={claiming}
+              >
                 <Trophy size={20} color={BG} weight="fill" />
                 <Text style={styles.claimButtonText}>
-                  Claim {(parseFloat(stakedSol) + parseFloat(rewardSol)).toFixed(4)} SOL
+                  {claiming ? 'Claiming...' : `Claim ${(parseFloat(stakedSol) + parseFloat(rewardSol)).toFixed(4)} SOL`}
                 </Text>
               </TouchableOpacity>
             </Animated.View>

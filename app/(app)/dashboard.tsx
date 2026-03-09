@@ -251,9 +251,15 @@ const styles = StyleSheet.create({
   },
   greeting: { fontFamily: 'Syne_700Bold', fontSize: 22, color: WHITE },
   address: { fontFamily: 'JetBrainsMono_400Regular', fontSize: 12, color: GRAY, marginTop: 2 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   statusDot: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4 },
   statusLabel: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: GRAY_L },
+  leaderboardBtn: {
+    width: 36, height: 36, borderRadius: 12,
+    backgroundColor: CARD, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(252,194,49,0.2)',
+  },
 
   streakCard: {
     marginHorizontal: 16,

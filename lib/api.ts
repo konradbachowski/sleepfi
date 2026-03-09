@@ -99,3 +99,11 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
     return [];
   }
 }
+
+export async function claimReward(data: {
+  userId: string;
+  challengeId: string;
+  walletAddress: string;
+}): Promise<{ success: boolean; signature?: string; payoutSol?: string; message: string }> {
+  return apiPost('/api/rewards/claim', data);
+}
