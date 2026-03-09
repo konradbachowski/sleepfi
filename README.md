@@ -106,4 +106,3 @@ Funded with 2 SOL on devnet for testing.
 ## Built by
 
 **HeyNeuron** — agentive software studio, Krakow
-Built in under 9 hours with Claude Code + multiple parallel agents
