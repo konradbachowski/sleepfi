@@ -1,4 +1,14 @@
 import { logSleep } from '../../lib/db';
+import { submitSleepOnChain } from '../../lib/anchorServer';
+import { neon } from '@neondatabase/serverless';
+
+async function getUserWallet(userId: string): Promise<string | null> {
+  const url = process.env.DATABASE_URL || process.env.EXPO_PUBLIC_DATABASE_URL;
+  if (!url) return null;
+  const sql = neon(url);
+  const result = await sql`SELECT wallet_address FROM users WHERE id = ${userId} LIMIT 1`;
+  return result[0]?.wallet_address ?? null;
+}
 
 export async function POST(request: Request) {
   try {
@@ -23,6 +33,14 @@ export async function POST(request: Request) {
       source: source || 'manual',
       goalHours: Number(goalHours || 7),
     });
+
+    // Submit sleep on-chain as oracle (best-effort, non-blocking)
+    const walletAddress = await getUserWallet(userId);
+    if (walletAddress) {
+      submitSleepOnChain(walletAddress, Number(durationHours), date).catch((err) => {
+        console.error('[submit_sleep on-chain]', err?.message || err);
+      });
+    }
 
     return Response.json(record);
   } catch (e) {

@@ -9,10 +9,11 @@ import { Lightning, MoonStars, CalendarCheck, ArrowLeft, Wallet, Users, PiggyBan
 import Slider from '@react-native-community/slider';
 import { useWallet } from '../../hooks/useWallet';
 import { useChallenge } from '../../hooks/useChallenge';
-import { buildStakeTransaction, solToLamports } from '../../lib/solana';
+import { solToLamports } from '../../lib/solana';
+import { initializeChallenge } from '../../lib/anchor';
 import { scheduleSleepReminder } from '../../lib/notifications';
 import { getPoolStats, PoolStats } from '../../lib/api';
-import { PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 
 const BG = '#0d1520';
 const CARD = '#141e2e';
@@ -21,7 +22,7 @@ const WHITE = '#f0f4f8';
 const GRAY = '#6b7a8d';
 const GRAY_L = '#9aaabb';
 
-const TREASURY = process.env.EXPO_PUBLIC_TREASURY_WALLET || 'So1anaTreasuryDevnet11111111111111';
+const DEVNET_CONNECTION = new Connection('https://api.devnet.solana.com', 'confirmed');
 
 export default function ChallengeScreen() {
   const { walletAddress, signAndSendTransaction } = useWallet();
@@ -57,12 +58,20 @@ export default function ChallengeScreen() {
     try {
       let signature: string;
       try {
-        const tx = await buildStakeTransaction(
-          new PublicKey(walletAddress),
-          TREASURY,
+        const { PublicKey } = await import('@solana/web3.js');
+        const mwaWallet = {
+          publicKey: new PublicKey(walletAddress),
+          sendTransaction: async (tx: any, conn: any) => {
+            return await signAndSendTransaction(tx);
+          },
+        };
+        signature = await initializeChallenge(
+          DEVNET_CONNECTION,
+          mwaWallet,
+          goalHours,
+          durationDays,
           solToLamports(sol)
         );
-        signature = await signAndSendTransaction(tx);
       } catch (txErr: any) {
         signature = 'MockStakeTx' + Date.now();
       }
