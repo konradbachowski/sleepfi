@@ -36,7 +36,8 @@ export function useWallet() {
               icon: '/icon.png',
             },
           });
-          return new PublicKey(authResult.accounts[0].address).toBase58();
+          const addressBytes = Buffer.from(authResult.accounts[0].address, 'base64');
+          return new PublicKey(addressBytes).toBase58();
         });
       } else {
         // Dev fallback
