@@ -84,3 +84,18 @@ export async function logSleep(data: {
 }): Promise<SleepRecord> {
   return apiPost('/api/sleep', data);
 }
+
+export interface LeaderboardEntry {
+  wallet_address: string;
+  best_streak: number;
+  challenges_completed: number;
+  total_staked_lamports: number;
+}
+
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  try {
+    return await apiGet('/api/leaderboard');
+  } catch {
+    return [];
+  }
+}

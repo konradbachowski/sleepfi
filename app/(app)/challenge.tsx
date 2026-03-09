@@ -10,6 +10,7 @@ import { Lightning, MoonStars, CalendarCheck, ArrowLeft, Wallet } from 'phosphor
 import { useWallet } from '../../hooks/useWallet';
 import { useChallenge } from '../../hooks/useChallenge';
 import { buildStakeTransaction, solToLamports } from '../../lib/solana';
+import { scheduleSleepReminder } from '../../lib/notifications';
 import { PublicKey } from '@solana/web3.js';
 
 const BG = '#0d1520';
@@ -71,6 +72,7 @@ export default function ChallengeScreen() {
         stakeTxSignature: signature,
       });
 
+      await scheduleSleepReminder();
       router.replace('/(app)/dashboard');
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'Failed to start challenge');

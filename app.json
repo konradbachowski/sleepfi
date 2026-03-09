@@ -35,7 +35,12 @@
           }
         }
       ],
-      "react-native-health-connect"
+      "react-native-health-connect",
+      ["expo-notifications", {
+        "icon": "./assets/icon.png",
+        "color": "#fcc231",
+        "sounds": []
+      }]
     ]
   }
 }

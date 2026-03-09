@@ -95,6 +95,29 @@ export async function getSleepHistory(userId: string, challengeId: string) {
   return result;
 }
 
+export async function getLeaderboard(limit = 20) {
+  const sql = getDb();
+  const result = await sql`
+    SELECT
+      u.wallet_address,
+      MAX(CAST(streak_data.streak AS INT)) as best_streak,
+      COUNT(DISTINCT c.id) as challenges_completed,
+      SUM(c.stake_lamports) FILTER (WHERE c.status = 'completed') as total_staked_lamports
+    FROM users u
+    JOIN challenges c ON c.user_id = u.id
+    JOIN LATERAL (
+      SELECT COUNT(*) FILTER (WHERE sr.met_goal = true) as streak
+      FROM sleep_records sr
+      WHERE sr.challenge_id = c.id
+    ) streak_data ON true
+    WHERE c.status IN ('active', 'completed')
+    GROUP BY u.id, u.wallet_address
+    ORDER BY best_streak DESC, challenges_completed DESC
+    LIMIT ${limit}
+  `;
+  return result;
+}
+
 export async function completeChallenge(challengeId: string, status: 'completed' | 'failed') {
   const sql = getDb();
   const result = await sql`

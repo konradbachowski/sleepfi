@@ -11,7 +11,7 @@ import { useEffect, useCallback } from 'react';
 import { router } from 'expo-router';
 import {
   Moon, Lightning, Plus, ArrowRight,
-  CheckCircle, Flame,
+  CheckCircle, Flame, Trophy,
 } from 'phosphor-react-native';
 import { useWallet } from '../../hooks/useWallet';
 import { useChallenge } from '../../hooks/useChallenge';
@@ -125,12 +125,20 @@ export default function DashboardScreen() {
             {walletAddress ? shortenAddress(walletAddress) : '...'}
           </Text>
         </View>
-        {challenge && (
-          <View style={styles.statusDot}>
-            <View style={[styles.dot, { backgroundColor: SUCCESS }]} />
-            <Text style={styles.statusLabel}>Active</Text>
-          </View>
-        )}
+        <View style={styles.headerRight}>
+          {challenge && (
+            <View style={styles.statusDot}>
+              <View style={[styles.dot, { backgroundColor: SUCCESS }]} />
+              <Text style={styles.statusLabel}>Active</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.leaderboardBtn}
+            onPress={() => router.push('/(app)/leaderboard')}
+          >
+            <Trophy size={18} color={ACCENT} weight="fill" />
+          </TouchableOpacity>
+        </View>
       </Animated.View>
 
       {/* Streak Hero — asymmetric: number left, flame right */}
