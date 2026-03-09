@@ -3,9 +3,9 @@ import {
   StyleSheet, Alert,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { Moon, Lightning, ArrowLeft, CheckCircle, Heartbeat } from 'phosphor-react-native';
+import { Moon, ArrowLeft, CheckCircle, Heartbeat, Warning } from 'phosphor-react-native';
 import { useWallet } from '../../hooks/useWallet';
 import { useChallenge } from '../../hooks/useChallenge';
 import { useSleep } from '../../hooks/useSleep';
@@ -15,126 +15,42 @@ const CARD = '#141e2e';
 const ACCENT = '#fcc231';
 const WHITE = '#f0f4f8';
 const GRAY = '#6b7a8d';
-const GRAY_L = '#9aaabb';
 const SUCCESS = '#34d399';
 const DANGER = '#f87171';
-
-// Simple time picker
-const MINUTES = [0, 15, 30, 45];
-
-function TimeSelector({
-  label,
-  hour,
-  minute,
-  onChangeHour,
-  onChangeMinute,
-}: {
-  label: string;
-  hour: number;
-  minute: number;
-  onChangeHour: (h: number) => void;
-  onChangeMinute: (m: number) => void;
-}) {
-  const adjustHour = (delta: number) => {
-    onChangeHour((hour + delta + 24) % 24);
-  };
-  const adjustMinute = (delta: number) => {
-    const idx = MINUTES.indexOf(minute);
-    const next = MINUTES[(idx + delta + MINUTES.length) % MINUTES.length];
-    onChangeMinute(next);
-  };
-
-  return (
-    <View style={styles.timeSel}>
-      <Text style={styles.timeSelLabel}>{label}</Text>
-      <View style={styles.timeRow}>
-        {/* Hours */}
-        <View style={styles.timeColumn}>
-          <TouchableOpacity onPress={() => adjustHour(1)} style={styles.timeArrow}>
-            <Text style={styles.timeArrowText}>▲</Text>
-          </TouchableOpacity>
-          <Text style={styles.timeValue}>
-            {String(hour).padStart(2, '0')}
-          </Text>
-          <TouchableOpacity onPress={() => adjustHour(-1)} style={styles.timeArrow}>
-            <Text style={styles.timeArrowText}>▼</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.timeSeparator}>:</Text>
-        {/* Minutes */}
-        <View style={styles.timeColumn}>
-          <TouchableOpacity onPress={() => adjustMinute(1)} style={styles.timeArrow}>
-            <Text style={styles.timeArrowText}>▲</Text>
-          </TouchableOpacity>
-          <Text style={styles.timeValue}>
-            {String(minute).padStart(2, '0')}
-          </Text>
-          <TouchableOpacity onPress={() => adjustMinute(-1)} style={styles.timeArrow}>
-            <Text style={styles.timeArrowText}>▼</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-}
 
 export default function LogSleepScreen() {
   const { user } = useWallet();
   const { challenge, submitSleep } = useChallenge();
-  const { fetchFromHealthConnect, calculateManual, data, loading, error } = useSleep();
-
-  const [bedHour, setBedHour] = useState(23);
-  const [bedMinute, setBedMinute] = useState(0);
-  const [wakeHour, setWakeHour] = useState(7);
-  const [wakeMinute, setWakeMinute] = useState(0);
+  const { fetchFromHealthConnect, data, loading, error } = useSleep();
   const [submitting, setSubmitting] = useState(false);
-  const [mode, setMode] = useState<'auto' | 'manual'>('manual');
 
-  const getSleepData = () => {
-    if (mode === 'auto' && data) return data;
+  // Auto-fetch on mount
+  useEffect(() => {
+    fetchFromHealthConnect();
+  }, []);
 
-    // Build dates for manual
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const bedtime = new Date(yesterday);
-    bedtime.setHours(bedHour, bedMinute, 0, 0);
-
-    const waketime = new Date(today);
-    waketime.setHours(wakeHour, wakeMinute, 0, 0);
-
-    return calculateManual(bedtime, waketime);
-  };
-
-  const currentData = getSleepData();
-  const goalHours = challenge?.goal_hours || 7;
-  const metGoal = currentData && currentData.durationHours >= goalHours;
-
-  const handleAutoDetect = async () => {
-    setMode('auto');
-    const result = await fetchFromHealthConnect();
-    if (!result) setMode('manual');
-  };
+  const goalHours = 7;
+  const metGoal = data && data.durationHours >= goalHours;
 
   const handleLog = async () => {
     if (!challenge || !user) {
       Alert.alert('Error', 'No active challenge');
       return;
     }
-
-    const sleepData = getSleepData();
-    if (!sleepData) return;
+    if (!data) {
+      Alert.alert('No data', 'Health Connect data not available. Make sure you have a sleep tracker connected.');
+      return;
+    }
 
     setSubmitting(true);
     try {
       const today = new Date().toISOString().split('T')[0];
       await submitSleep({
         date: today,
-        startTime: sleepData.startTime,
-        endTime: sleepData.endTime,
-        durationHours: sleepData.durationHours,
-        source: sleepData.source,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        durationHours: data.durationHours,
+        source: 'health_connect',
       });
       router.replace('/(app)/dashboard');
     } catch (e: any) {
@@ -155,56 +71,55 @@ export default function LogSleepScreen() {
         <View style={{ width: 40 }} />
       </Animated.View>
 
-      {/* Auto-detect */}
-      <Animated.View entering={FadeInDown.delay(150).springify()}>
-        <TouchableOpacity
-          style={styles.autoBtn}
-          onPress={handleAutoDetect}
-          disabled={loading}
-        >
-          <Heartbeat size={20} color={ACCENT} weight="fill" />
-          <Text style={styles.autoBtnText}>
-            {loading ? 'Reading Health Connect...' : 'Auto-detect from Health Connect'}
+      {/* Health Connect status */}
+      <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.hcCard}>
+        <Heartbeat size={20} color={ACCENT} weight="fill" />
+        <View style={styles.hcText}>
+          <Text style={styles.hcTitle}>Health Connect</Text>
+          <Text style={styles.hcSub}>
+            {loading
+              ? 'Reading last night\'s sleep...'
+              : data
+              ? 'Sleep data loaded'
+              : 'No data found for last night'}
           </Text>
-        </TouchableOpacity>
-        {error && <Text style={styles.errorText}>{error}</Text>}
+        </View>
+        {!loading && (
+          <TouchableOpacity onPress={fetchFromHealthConnect} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Refresh</Text>
+          </TouchableOpacity>
+        )}
       </Animated.View>
 
-      {/* Divider */}
-      <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.divider}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>or enter manually</Text>
-        <View style={styles.dividerLine} />
-      </Animated.View>
+      {/* No HC data warning */}
+      {!loading && !data && (
+        <Animated.View entering={FadeInDown.delay(220).springify()} style={styles.warningCard}>
+          <Warning size={18} color={ACCENT} weight="fill" />
+          <Text style={styles.warningText}>
+            No sleep session found. Make sure you have Samsung Health, Sleep as Android, or another Health Connect app installed and tracking your sleep.
+          </Text>
+        </Animated.View>
+      )}
 
-      {/* Manual time pickers */}
-      <Animated.View entering={FadeInDown.delay(250).springify()} style={styles.card}>
-        <TimeSelector
-          label="Bedtime (last night)"
-          hour={bedHour}
-          minute={bedMinute}
-          onChangeHour={setBedHour}
-          onChangeMinute={setBedMinute}
-        />
-        <View style={styles.cardSeparator} />
-        <TimeSelector
-          label="Wake time (this morning)"
-          hour={wakeHour}
-          minute={wakeMinute}
-          onChangeHour={setWakeHour}
-          onChangeMinute={setWakeMinute}
-        />
-      </Animated.View>
+      {error && (
+        <Animated.View entering={FadeInDown.delay(220).springify()} style={styles.warningCard}>
+          <Warning size={18} color={DANGER} weight="fill" />
+          <Text style={[styles.warningText, { color: DANGER }]}>{error}</Text>
+        </Animated.View>
+      )}
 
       {/* Duration display */}
-      {currentData && (
-        <Animated.View entering={FadeInDown.delay(320).springify()} style={styles.durationCard}>
-          <Text style={styles.durationLabel}>DURATION</Text>
+      {data && (
+        <Animated.View entering={FadeInDown.delay(280).springify()} style={styles.durationCard}>
+          <Text style={styles.durationLabel}>LAST NIGHT</Text>
           <View style={styles.durationRow}>
-            <Text style={styles.durationValue}>{currentData.durationHours}</Text>
+            <Text style={styles.durationValue}>{data.durationHours}</Text>
             <Text style={styles.durationUnit}>hours</Text>
           </View>
-          <View style={[styles.goalBadge, { backgroundColor: metGoal ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)' }]}>
+          <View style={[
+            styles.goalBadge,
+            { backgroundColor: metGoal ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)' }
+          ]}>
             {metGoal ? (
               <CheckCircle size={14} color={SUCCESS} weight="fill" />
             ) : (
@@ -212,19 +127,19 @@ export default function LogSleepScreen() {
             )}
             <Text style={[styles.goalText, { color: metGoal ? SUCCESS : DANGER }]}>
               {metGoal
-                ? `Goal met (+${(currentData.durationHours - goalHours).toFixed(1)}h)`
-                : `${(goalHours - currentData.durationHours).toFixed(1)}h below ${goalHours}h goal`}
+                ? `Goal met — streak continues`
+                : `${(goalHours - data.durationHours).toFixed(1)}h below 7h goal — streak broken`}
             </Text>
           </View>
         </Animated.View>
       )}
 
       {/* Log button */}
-      <Animated.View entering={FadeInDown.delay(400).springify()}>
+      <Animated.View entering={FadeInDown.delay(380).springify()}>
         <TouchableOpacity
-          style={[styles.logButton, submitting && styles.logButtonDisabled]}
+          style={[styles.logButton, (!data || submitting) && styles.logButtonDisabled]}
           onPress={handleLog}
-          disabled={submitting}
+          disabled={!data || submitting}
           activeOpacity={0.85}
         >
           <Moon size={20} color={BG} weight="fill" />
@@ -250,42 +165,30 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: 'Syne_700Bold', fontSize: 20, color: WHITE },
 
-  autoBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: CARD, borderRadius: 16,
-    padding: 16, borderWidth: 1,
-    borderColor: 'rgba(252,194,49,0.2)',
+  hcCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: CARD, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: 'rgba(252,194,49,0.2)',
   },
-  autoBtnText: { fontFamily: 'DMSans_500Medium', fontSize: 15, color: WHITE, flex: 1 },
-  errorText: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: DANGER, marginTop: 8, paddingHorizontal: 4 },
-
-  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 4 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
-  dividerText: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: GRAY },
-
-  card: {
-    backgroundColor: CARD, borderRadius: 20,
-    padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+  hcText: { flex: 1 },
+  hcTitle: { fontFamily: 'DMSans_500Medium', fontSize: 15, color: WHITE },
+  hcSub: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: GRAY, marginTop: 2 },
+  retryBtn: {
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
-  cardSeparator: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 16 },
+  retryText: { fontFamily: 'DMSans_500Medium', fontSize: 12, color: GRAY },
 
-  timeSel: {},
-  timeSelLabel: { fontFamily: 'DMSans_500Medium', fontSize: 12, color: GRAY, marginBottom: 12 },
-  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  timeColumn: { alignItems: 'center', gap: 6 },
-  timeArrow: { paddingHorizontal: 16, paddingVertical: 4 },
-  timeArrowText: { fontSize: 12, color: GRAY },
-  timeValue: {
-    fontFamily: 'JetBrainsMono_400Regular', fontSize: 36,
-    color: WHITE, minWidth: 56, textAlign: 'center',
+  warningCard: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    backgroundColor: 'rgba(252,194,49,0.06)', borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: 'rgba(252,194,49,0.12)',
   },
-  timeSeparator: { fontFamily: 'Syne_700Bold', fontSize: 32, color: GRAY, marginBottom: 4 },
+  warningText: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY, flex: 1, lineHeight: 18 },
 
   durationCard: {
-    backgroundColor: CARD, borderRadius: 20,
-    padding: 20, borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    alignItems: 'flex-start',
+    backgroundColor: CARD, borderRadius: 20, padding: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
   durationLabel: {
     fontFamily: 'DMSans_500Medium', fontSize: 11, color: GRAY,
@@ -297,6 +200,7 @@ const styles = StyleSheet.create({
   goalBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     borderRadius: 100, paddingHorizontal: 12, paddingVertical: 6,
+    alignSelf: 'flex-start',
   },
   goalText: { fontFamily: 'DMSans_500Medium', fontSize: 13 },
 
@@ -304,10 +208,9 @@ const styles = StyleSheet.create({
     backgroundColor: ACCENT, borderRadius: 16,
     paddingVertical: 18, flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center', gap: 10,
-    shadowColor: ACCENT,
-    shadowOffset: { width: 0, height: 8 },
+    shadowColor: ACCENT, shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25, shadowRadius: 16, elevation: 8,
   },
-  logButtonDisabled: { opacity: 0.6 },
+  logButtonDisabled: { opacity: 0.4 },
   logButtonText: { fontFamily: 'Syne_700Bold', fontSize: 16, color: BG },
 });

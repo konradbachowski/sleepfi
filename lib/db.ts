@@ -95,6 +95,23 @@ export async function getSleepHistory(userId: string, challengeId: string) {
   return result;
 }
 
+export async function getPoolStats(): Promise<{
+  failedPoolLamports: number;
+  totalActiveStakeLamports: number;
+}> {
+  const sql = getDb();
+  const result = await sql`
+    SELECT
+      COALESCE(SUM(stake_lamports) FILTER (WHERE status = 'failed'), 0) as failed_pool,
+      COALESCE(SUM(stake_lamports) FILTER (WHERE status IN ('active', 'completed')), 0) as total_active
+    FROM challenges
+  `;
+  return {
+    failedPoolLamports: Number(result[0].failed_pool),
+    totalActiveStakeLamports: Number(result[0].total_active),
+  };
+}
+
 export async function getLeaderboard(limit = 20) {
   const sql = getDb();
   const result = await sql`

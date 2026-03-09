@@ -5,8 +5,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import Slider from '@react-native-community/slider';
-import { Lightning, MoonStars, CalendarCheck, ArrowLeft, Wallet } from 'phosphor-react-native';
+import { Lightning, MoonStars, CalendarCheck, ArrowLeft, Wallet, Users } from 'phosphor-react-native';
 import { useWallet } from '../../hooks/useWallet';
 import { useChallenge } from '../../hooks/useChallenge';
 import { buildStakeTransaction, solToLamports } from '../../lib/solana';
@@ -22,19 +21,17 @@ const GRAY_L = '#9aaabb';
 const SUCCESS = '#34d399';
 
 const TREASURY = process.env.EXPO_PUBLIC_TREASURY_WALLET || 'So1anaTreasuryDevnet11111111111111';
+const GOAL_HOURS = 7; // Fixed — no slider, everyone has the same goal
 
 export default function ChallengeScreen() {
   const { walletAddress, signAndSendTransaction } = useWallet();
   const { startChallenge } = useChallenge();
 
-  const [goalHours, setGoalHours] = useState(7);
   const [durationDays, setDurationDays] = useState(7);
   const [stakeAmount, setStakeAmount] = useState('0.1');
   const [loading, setLoading] = useState(false);
 
   const DURATION_OPTIONS = [3, 7, 14];
-
-  const estimatedReward = (parseFloat(stakeAmount || '0') * 0.1).toFixed(3);
 
   const handleStake = async () => {
     if (!walletAddress) {
@@ -50,7 +47,6 @@ export default function ChallengeScreen() {
 
     setLoading(true);
     try {
-      // 1. Build transaction
       let signature: string;
       try {
         const tx = await buildStakeTransaction(
@@ -60,13 +56,11 @@ export default function ChallengeScreen() {
         );
         signature = await signAndSendTransaction(tx);
       } catch (txErr: any) {
-        // If MWA not available, use mock for dev
         signature = 'MockStakeTx' + Date.now();
       }
 
-      // 2. Create challenge in DB
       await startChallenge({
-        goalHours,
+        goalHours: GOAL_HOURS,
         durationDays,
         stakeLamports: solToLamports(sol),
         stakeTxSignature: signature,
@@ -92,30 +86,15 @@ export default function ChallengeScreen() {
         <View style={{ width: 40 }} />
       </Animated.View>
 
-      {/* Goal hours */}
-      <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.card}>
-        <View style={styles.cardHeader}>
-          <MoonStars size={18} color={ACCENT} weight="fill" />
-          <Text style={styles.cardTitle}>Sleep Goal</Text>
+      {/* Fixed goal — no slider */}
+      <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.goalCard}>
+        <MoonStars size={18} color={ACCENT} weight="fill" />
+        <View style={styles.goalText}>
+          <Text style={styles.goalTitle}>Sleep Goal</Text>
+          <Text style={styles.goalSub}>Verified via Health Connect only</Text>
         </View>
-        <View style={styles.valueRow}>
-          <Text style={styles.heroValue}>{goalHours}</Text>
-          <Text style={styles.heroUnit}>hours / night</Text>
-        </View>
-        <Slider
-          style={styles.slider}
-          minimumValue={6}
-          maximumValue={9}
-          step={0.5}
-          value={goalHours}
-          onValueChange={setGoalHours}
-          minimumTrackTintColor={ACCENT}
-          maximumTrackTintColor="rgba(255,255,255,0.1)"
-          thumbTintColor={ACCENT}
-        />
-        <View style={styles.sliderLabels}>
-          <Text style={styles.sliderLabel}>6h</Text>
-          <Text style={styles.sliderLabel}>9h</Text>
+        <View style={styles.goalBadge}>
+          <Text style={styles.goalHours}>7h</Text>
         </View>
       </Animated.View>
 
@@ -160,11 +139,10 @@ export default function ChallengeScreen() {
           />
           <Text style={styles.inputSuffix}>SOL</Text>
         </View>
-        <View style={styles.stakeHint}>
+        <View style={styles.poolHint}>
+          <Users size={14} color={GRAY} weight="fill" />
           <Text style={styles.hintText}>
-            Potential reward:{' '}
-            <Text style={styles.hintAccent}>+{estimatedReward} SOL</Text>
-            {' '}(10% bonus on success)
+            Win = stake back + share of failed challengers' pool
           </Text>
         </View>
       </Animated.View>
@@ -172,8 +150,8 @@ export default function ChallengeScreen() {
       {/* Summary */}
       <Animated.View entering={FadeInDown.delay(390).springify()} style={styles.summary}>
         <View style={styles.summaryRow}>
-          <Text style={styles.summaryKey}>Goal</Text>
-          <Text style={styles.summaryVal}>{goalHours}h per night</Text>
+          <Text style={styles.summaryKey}>Sleep goal</Text>
+          <Text style={styles.summaryVal}>7h / night (fixed)</Text>
         </View>
         <View style={styles.separator} />
         <View style={styles.summaryRow}>
@@ -186,6 +164,11 @@ export default function ChallengeScreen() {
           <Text style={[styles.summaryVal, { fontFamily: 'JetBrainsMono_400Regular', color: ACCENT }]}>
             {stakeAmount || '0'} SOL
           </Text>
+        </View>
+        <View style={styles.separator} />
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryKey}>If you fail</Text>
+          <Text style={[styles.summaryVal, { color: '#f87171' }]}>Stake lost to pool</Text>
         </View>
       </Animated.View>
 
@@ -203,7 +186,7 @@ export default function ChallengeScreen() {
           </Text>
         </TouchableOpacity>
         <Text style={styles.disclaimer}>
-          Transaction requires Phantom or Solflare on Android (devnet)
+          Requires Phantom or Solflare on Android (devnet)
         </Text>
       </Animated.View>
     </ScrollView>
@@ -214,33 +197,36 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: BG },
   container: { paddingHorizontal: 16, paddingTop: 60, paddingBottom: 48, gap: 12 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 8,
   },
   backBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: CARD,
-    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: CARD, alignItems: 'center', justifyContent: 'center',
   },
   title: { fontFamily: 'Syne_700Bold', fontSize: 20, color: WHITE },
 
+  goalCard: {
+    backgroundColor: CARD, borderRadius: 20,
+    padding: 20, borderWidth: 1,
+    borderColor: 'rgba(252,194,49,0.2)',
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+  },
+  goalText: { flex: 1 },
+  goalTitle: { fontFamily: 'DMSans_500Medium', fontSize: 15, color: WHITE },
+  goalSub: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: GRAY, marginTop: 2 },
+  goalBadge: {
+    backgroundColor: 'rgba(252,194,49,0.12)',
+    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8,
+  },
+  goalHours: { fontFamily: 'Syne_700Bold', fontSize: 22, color: ACCENT },
+
   card: {
-    backgroundColor: CARD,
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: CARD, borderRadius: 20,
+    padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   cardTitle: { fontFamily: 'DMSans_500Medium', fontSize: 14, color: GRAY_L },
-  valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 12 },
-  heroValue: { fontFamily: 'Syne_700Bold', fontSize: 56, color: ACCENT, lineHeight: 60 },
-  heroUnit: { fontFamily: 'DMSans_400Regular', fontSize: 16, color: GRAY },
-  slider: { width: '100%', height: 40 },
-  sliderLabels: { flexDirection: 'row', justifyContent: 'space-between' },
-  sliderLabel: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: GRAY },
 
   durationRow: { flexDirection: 'row', gap: 10 },
   durationOption: {
@@ -271,50 +257,34 @@ const styles = StyleSheet.create({
   },
   inputSuffix: {
     fontFamily: 'JetBrainsMono_400Regular',
-    fontSize: 18, color: ACCENT,
-    paddingHorizontal: 16,
+    fontSize: 18, color: ACCENT, paddingHorizontal: 16,
   },
-  stakeHint: { marginTop: 10 },
-  hintText: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY },
-  hintAccent: { fontFamily: 'DMSans_500Medium', color: SUCCESS },
+  poolHint: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  hintText: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY, flex: 1 },
 
   summary: {
-    backgroundColor: CARD,
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: CARD, borderRadius: 20,
+    paddingHorizontal: 20, paddingVertical: 4,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
   summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
+    flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14,
   },
   summaryKey: { fontFamily: 'DMSans_400Regular', fontSize: 14, color: GRAY },
   summaryVal: { fontFamily: 'DMSans_500Medium', fontSize: 14, color: WHITE },
   separator: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)' },
 
   stakeButton: {
-    backgroundColor: ACCENT,
-    borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    shadowColor: ACCENT,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+    backgroundColor: ACCENT, borderRadius: 16,
+    paddingVertical: 18, paddingHorizontal: 20,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    shadowColor: ACCENT, shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25, shadowRadius: 16, elevation: 8,
   },
   stakeButtonDisabled: { opacity: 0.6 },
   stakeButtonText: { fontFamily: 'Syne_700Bold', fontSize: 16, color: BG },
   disclaimer: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12, color: GRAY,
+    fontFamily: 'DMSans_400Regular', fontSize: 12, color: GRAY,
     textAlign: 'center', marginTop: 12,
   },
 });

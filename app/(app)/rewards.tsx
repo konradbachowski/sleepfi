@@ -30,9 +30,6 @@ export default function RewardsScreen() {
   const isComplete = challenge?.status === 'completed' || (daysLeft === 0 && !!challenge);
   const progressPercent = totalDays > 0 ? (streak / totalDays) * 100 : 0;
   const stakedSol = challenge ? lamportsToSol(challenge.stake_lamports) : '0';
-  const rewardSol = challenge
-    ? (parseFloat(stakedSol) * 0.1).toFixed(4)
-    : '0';
 
   const handleClaim = async () => {
     if (!challenge || !user || !walletAddress) return;
@@ -107,15 +104,13 @@ export default function RewardsScreen() {
             </View>
             <View style={styles.divider} />
             <View style={styles.stakeRow}>
-              <Text style={styles.stakeKey}>Bonus (on success)</Text>
-              <Text style={[styles.stakeVal, { color: SUCCESS }]}>+{rewardSol} SOL</Text>
+              <Text style={styles.stakeKey}>Pool bonus (on success)</Text>
+              <Text style={[styles.stakeVal, { color: SUCCESS }]}>from failed challengers</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.stakeRow}>
-              <Text style={styles.stakeKey}>Total payout</Text>
-              <Text style={[styles.stakeVal, { fontFamily: 'JetBrainsMono_400Regular', color: ACCENT }]}>
-                {(parseFloat(stakedSol) + parseFloat(rewardSol)).toFixed(4)} SOL
-              </Text>
+              <Text style={styles.stakeKey}>If you fail</Text>
+              <Text style={[styles.stakeVal, { color: DANGER }]}>stake lost to pool</Text>
             </View>
           </Animated.View>
 
@@ -154,7 +149,7 @@ export default function RewardsScreen() {
               >
                 <Trophy size={20} color={BG} weight="fill" />
                 <Text style={styles.claimButtonText}>
-                  {claiming ? 'Claiming...' : `Claim ${(parseFloat(stakedSol) + parseFloat(rewardSol)).toFixed(4)} SOL`}
+                  {claiming ? 'Claiming...' : `Claim ${stakedSol} SOL + pool bonus`}
                 </Text>
               </TouchableOpacity>
             </Animated.View>

@@ -1,4 +1,4 @@
-import { Connection, Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 
 export const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
 
@@ -16,9 +16,8 @@ export async function sendSolFromTreasury(
   const treasury = getTreasuryKeypair();
   const recipient = new PublicKey(recipientAddress);
 
-  // Check treasury balance
   const balance = await connection.getBalance(treasury.publicKey);
-  const totalNeeded = lamports + 5000; // 5000 lamports for fee
+  const totalNeeded = lamports + 5000;
   if (balance < totalNeeded) {
     throw new Error(`Treasury insufficient balance: ${balance} lamports, need ${totalNeeded}`);
   }
@@ -35,10 +34,25 @@ export async function sendSolFromTreasury(
   return signature;
 }
 
-export const REWARD_BONUS_RATE = 0.1; // 10% bonus on successful challenge
+// Platform fee taken from failed pool on each successful claim
+export const PLATFORM_FEE_RATE = 0.05; // 5%
 
-export function calculatePayout(stakeLamports: number, success: boolean): number {
-  if (!success) return 0;
-  const bonus = Math.floor(stakeLamports * REWARD_BONUS_RATE);
-  return stakeLamports + bonus;
+/**
+ * Pool model (Moonwalk-style):
+ * - Failed stakes accumulate in treasury as the reward pool
+ * - Successful claimants get: their stake back + proportional share of the pool
+ * - Proportion = user_stake / total_active_stakes
+ * - Platform takes 5% of the pool share
+ */
+export function calculatePoolPayout(
+  userStakeLamports: number,
+  failedPoolLamports: number,
+  totalActiveStakeLamports: number
+): number {
+  if (totalActiveStakeLamports === 0) return userStakeLamports;
+
+  const proportion = userStakeLamports / totalActiveStakeLamports;
+  const poolShare = failedPoolLamports * proportion * (1 - PLATFORM_FEE_RATE);
+
+  return userStakeLamports + Math.floor(poolShare);
 }

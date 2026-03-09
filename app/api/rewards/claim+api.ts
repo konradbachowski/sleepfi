@@ -1,5 +1,5 @@
-import { sendSolFromTreasury, calculatePayout } from '../../../lib/treasury';
-import { getActiveChallenge, completeChallenge } from '../../../lib/db';
+import { sendSolFromTreasury, calculatePoolPayout } from '../../../lib/treasury';
+import { getActiveChallenge, completeChallenge, getPoolStats } from '../../../lib/db';
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +9,6 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Verify challenge exists and is claimable
     const challenge = await getActiveChallenge(userId);
     if (!challenge || challenge.id !== challengeId) {
       return Response.json({ error: 'Challenge not found or not active' }, { status: 404 });
@@ -20,7 +19,6 @@ export async function POST(request: Request) {
     const endsAt = new Date(challenge.ends_at);
     const now = new Date();
 
-    // Challenge must be complete (time ended or all days logged)
     const timeUp = now >= endsAt;
     const allDaysLogged = streak >= durationDays;
 
@@ -29,25 +27,30 @@ export async function POST(request: Request) {
     }
 
     const success = streak >= durationDays;
-    const payoutLamports = calculatePayout(Number(challenge.stake_lamports), success);
 
-    if (payoutLamports === 0) {
-      // Failed challenge — mark as failed, no payout
+    if (!success) {
+      // Failed — stake stays in treasury as pool for winners
       await completeChallenge(challengeId, 'failed');
-      return Response.json({ success: false, message: 'Challenge failed. Stake forfeited.' });
+      return Response.json({ success: false, message: 'Challenge failed. Stake added to reward pool.' });
     }
 
-    // Send SOL from treasury
-    const signature = await sendSolFromTreasury(walletAddress, payoutLamports);
+    // Get pool stats for proportional payout
+    const { failedPoolLamports, totalActiveStakeLamports } = await getPoolStats();
+    const userStake = Number(challenge.stake_lamports);
 
-    // Mark challenge as completed
+    const payoutLamports = calculatePoolPayout(userStake, failedPoolLamports, totalActiveStakeLamports);
+
+    const signature = await sendSolFromTreasury(walletAddress, payoutLamports);
     await completeChallenge(challengeId, 'completed');
+
+    const bonusLamports = payoutLamports - userStake;
 
     return Response.json({
       success: true,
       signature,
       payoutLamports,
       payoutSol: (payoutLamports / 1_000_000_000).toFixed(4),
+      bonusSol: (bonusLamports / 1_000_000_000).toFixed(4),
       message: `${(payoutLamports / 1_000_000_000).toFixed(4)} SOL sent to your wallet`,
     });
   } catch (e: any) {
