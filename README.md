@@ -2,7 +2,7 @@
 
 > Stake SOL on your sleep. Hit 7h every night. Earn rewards.
 
-Built for the **Solana Seeker hackathon** by [HeyNeuron](https://heyneuron.pl).
+Built for the **Solana Seeker hackathon** by [HeyNeuron](https://heyneuron.com).
 
 ---
 
@@ -105,4 +105,4 @@ Funded with 2 SOL on devnet for testing.
 
 ## Built by
 
-**HeyNeuron** — agentive software studio, Krakow
+**[HeyNeuron](https://heyneuron.com)** — agentive software studio, Krakow
