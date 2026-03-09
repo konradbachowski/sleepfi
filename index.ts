@@ -1,4 +1,2 @@
-import { Buffer } from 'buffer';
-global.Buffer = Buffer;
-
+import './polyfills';
 import 'expo-router/entry';
