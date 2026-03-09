@@ -12,7 +12,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#0d1520"
     },
-    "platforms": ["android", "web"],
+    "platforms": [
+      "android",
+      "web"
+    ],
     "android": {
       "package": "com.heyneuron.sleepfi",
       "adaptiveIcon": {
@@ -30,17 +33,27 @@
         {
           "android": {
             "minSdkVersion": 26,
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
           }
         }
       ],
       "react-native-health-connect",
-      ["expo-notifications", {
-        "icon": "./assets/icon.png",
-        "color": "#fcc231",
-        "sounds": []
-      }]
-    ]
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#fcc231",
+          "sounds": []
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f975fed3-9b70-4050-b83c-a580fffdb98d"
+      }
+    },
+    "owner": "konradek"
   }
 }
