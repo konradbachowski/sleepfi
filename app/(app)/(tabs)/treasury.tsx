@@ -1,10 +1,10 @@
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useEffect, useState } from 'react';
-import { Vault, ArrowsClockwise, Lightning, Moon, Coins } from 'phosphor-react-native';
-import { getPoolStats, PoolStats } from '../../../lib/api';
+import { Vault, ArrowsClockwise, Lightning, Moon, Coins, ArrowSquareOut } from 'phosphor-react-native';
+import { getTreasuryStats, TreasuryStats } from '../../../lib/api';
 
 const BG = '#0d1520';
 const CARD = '#141e2e';
@@ -15,40 +15,54 @@ const GRAY_L = '#9aaabb';
 const SUCCESS = '#34d399';
 
 export default function TreasuryScreen() {
-  const [pool, setPool] = useState<PoolStats | null>(null);
+  const [stats, setStats] = useState<TreasuryStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = () => {
     setLoading(true);
-    getPoolStats()
-      .then(setPool)
+    getTreasuryStats()
+      .then(setStats)
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
+
+  const shortAddr = (addr: string | null) =>
+    addr ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : null;
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.headerRow}>
         <View>
           <Text style={styles.title}>Treasury</Text>
-          <Text style={styles.subtitle}>Reward pool stats</Text>
+          <Text style={styles.subtitle}>On-chain reward pool</Text>
         </View>
         <TouchableOpacity onPress={load} style={styles.refreshBtn}>
           <ArrowsClockwise size={18} color={GRAY} />
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Hero: failed pool */}
+      {/* Hero: treasury wallet balance */}
       <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.heroCard}>
-        <Text style={styles.heroLabel}>FAILED STAKES POOL</Text>
+        <Text style={styles.heroLabel}>TREASURY WALLET BALANCE</Text>
         <Text style={styles.heroValue}>
-          {loading ? '—' : pool?.failedPoolSol ?? '0.0000'}
+          {loading ? '—' : stats?.treasuryBalanceSol ?? '0.0000'}
         </Text>
-        <Text style={styles.heroUnit}>SOL available to winners</Text>
+        <Text style={styles.heroUnit}>SOL on devnet</Text>
+
+        {stats?.explorerUrl && (
+          <TouchableOpacity
+            style={styles.explorerBtn}
+            onPress={() => Linking.openURL(stats.explorerUrl!)}
+          >
+            <Text style={styles.explorerAddr}>{shortAddr(stats.treasuryAddress)}</Text>
+            <ArrowSquareOut size={14} color={ACCENT} />
+          </TouchableOpacity>
+        )}
+
         <View style={styles.heroDivider} />
         <Text style={styles.heroDesc}>
-          Every failed challenge feeds this pool. Winners share it proportionally to their stake.
+          Failed challenge stakes accumulate here. Winners share the pool proportional to their stake.
         </Text>
       </Animated.View>
 
@@ -57,16 +71,16 @@ export default function TreasuryScreen() {
         <View style={styles.statCard}>
           <Vault size={18} color={ACCENT} weight="fill" />
           <Text style={styles.statValue}>
-            {loading ? '—' : pool?.totalActiveSol ?? '0.0000'}
+            {loading ? '—' : stats?.totalActiveSol ?? '0.0000'}
           </Text>
           <Text style={styles.statLabel}>SOL{'\n'}staked</Text>
         </View>
         <View style={styles.statCard}>
           <Coins size={18} color={SUCCESS} weight="fill" />
           <Text style={[styles.statValue, { color: SUCCESS }]}>
-            {loading ? '—' : pool?.failedPoolSol ?? '0.0000'}
+            {loading ? '—' : stats?.failedPoolSol ?? '0.0000'}
           </Text>
-          <Text style={styles.statLabel}>SOL{'\n'}in pool</Text>
+          <Text style={styles.statLabel}>from{'\n'}failed</Text>
         </View>
         <View style={styles.statCard}>
           <Lightning size={18} color={ACCENT} weight="fill" />
@@ -114,6 +128,13 @@ const styles = StyleSheet.create({
   heroLabel: { fontFamily: 'DMSans_500Medium', fontSize: 11, color: GRAY, letterSpacing: 1.2, marginBottom: 8 },
   heroValue: { fontFamily: 'Syne_700Bold', fontSize: 56, color: ACCENT, lineHeight: 60, letterSpacing: -1 },
   heroUnit: { fontFamily: 'DMSans_400Regular', fontSize: 15, color: GRAY_L, marginTop: 4 },
+  explorerBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginTop: 10, alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 8, borderWidth: 1, borderColor: 'rgba(252,194,49,0.25)',
+  },
+  explorerAddr: { fontFamily: 'JetBrainsMono_400Regular', fontSize: 12, color: ACCENT },
   heroDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 16 },
   heroDesc: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY, lineHeight: 18 },
 

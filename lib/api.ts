@@ -81,6 +81,8 @@ export async function logSleep(data: {
   durationHours: number;
   source: 'manual' | 'health_connect';
   goalHours: number;
+  walletAddress?: string;
+  challengeIdOnChain?: number;
 }): Promise<SleepRecord> {
   return apiPost('/api/sleep', data);
 }
@@ -112,6 +114,34 @@ export interface PoolStats {
 export async function getPoolStats(stakeLamports?: number): Promise<PoolStats> {
   const query = stakeLamports ? `?stake=${stakeLamports}` : '';
   return apiGet(`/api/pool${query}`);
+}
+
+export interface TreasuryStats {
+  treasuryBalanceLamports: number;
+  treasuryBalanceSol: string;
+  treasuryAddress: string | null;
+  explorerUrl: string | null;
+  failedPoolLamports: number;
+  failedPoolSol: string;
+  totalActiveStakeLamports: number;
+  totalActiveSol: string;
+}
+
+export async function getTreasuryStats(): Promise<TreasuryStats> {
+  try {
+    return await apiGet('/api/treasury');
+  } catch {
+    return {
+      treasuryBalanceLamports: 0,
+      treasuryBalanceSol: '0.0000',
+      treasuryAddress: null,
+      explorerUrl: null,
+      failedPoolLamports: 0,
+      failedPoolSol: '0.0000',
+      totalActiveStakeLamports: 0,
+      totalActiveSol: '0.0000',
+    };
+  }
 }
 
 export async function claimReward(data: {

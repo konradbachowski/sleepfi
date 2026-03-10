@@ -57,6 +57,7 @@ export default function ChallengeScreen() {
     setLoading(true);
     try {
       let signature: string;
+      let challengeIdOnChain: number = 0;
       try {
         const { PublicKey } = await import('@solana/web3.js');
         const mwaWallet = {
@@ -65,13 +66,15 @@ export default function ChallengeScreen() {
             return await signAndSendTransaction(tx);
           },
         };
-        signature = await initializeChallenge(
+        const result = await initializeChallenge(
           DEVNET_CONNECTION,
           mwaWallet,
           goalHours,
           durationDays,
           solToLamports(sol)
         );
+        signature = result.signature;
+        challengeIdOnChain = result.challengeId;
       } catch (txErr: any) {
         signature = 'MockStakeTx' + Date.now();
       }
@@ -81,6 +84,7 @@ export default function ChallengeScreen() {
         durationDays,
         stakeLamports: solToLamports(sol),
         stakeTxSignature: signature,
+        challengeIdOnChain,
       });
 
       await scheduleSleepReminder();

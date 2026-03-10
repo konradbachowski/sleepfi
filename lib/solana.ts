@@ -1,28 +1,10 @@
-import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 export const SOLANA_CLUSTER = 'devnet';
 export const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
 
-export async function buildStakeTransaction(
-  fromPubkey: PublicKey,
-  treasuryAddress: string,
-  lamports: number
-): Promise<Transaction> {
-  const tx = new Transaction().add(
-    SystemProgram.transfer({
-      fromPubkey,
-      toPubkey: new PublicKey(treasuryAddress),
-      lamports,
-    })
-  );
-
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-  tx.recentBlockhash = blockhash;
-  tx.feePayer = fromPubkey;
-  (tx as any).lastValidBlockHeight = lastValidBlockHeight;
-
-  return tx;
-}
+// Note: staking is now handled by the Anchor program via lib/anchor.ts initializeChallenge().
+// buildStakeTransaction (direct SOL transfer) is removed — challenges use PDA escrow.
 
 export const solToLamports = (sol: number) => Math.floor(sol * LAMPORTS_PER_SOL);
 export const lamportsToSol = (lamports: number) => (lamports / LAMPORTS_PER_SOL).toFixed(4);

@@ -61,16 +61,21 @@ To use SleepFi you need **one of these apps** installed on your Android device t
 SOL is locked in a **Program Derived Address (PDA) vault** — not a regular wallet. The Anchor program controls when and to whom it's released.
 
 ```
-Program ID: 29ZkK7ivpzz6zTEyPh5grfpekJwAmWuueSRDe85xusuc (devnet)
+Program ID: Gq6HZCUkXhznL8BBfEVXwnB4BCyzfvhpu4CwYe86wUuD (devnet)
+Pool PDA:   GiqenKFwjeqcgGztmvR31bn44miKp5WxbqsDNDyWqGq1
+Oracle:     Brdg78coo8Z5qv6bmxYwGBfEgfP8fJ8nrPj7iek7y6eE
 ```
 
-**Instructions:**
-- `initialize_challenge` — user stakes SOL into vault PDA
-- `submit_sleep` — oracle (backend) submits verified Health Connect data on-chain
-- `claim` — user claims vault after successful challenge
-- `forfeit` — anyone can trigger after time expires on a failed challenge
+[View program on Solana Explorer →](https://explorer.solana.com/address/Gq6HZCUkXhznL8BBfEVXwnB4BCyzfvhpu4CwYe86wUuD?cluster=devnet)
 
-This means: even if HeyNeuron disappears, your SOL is safe in the program vault.
+**Instructions:**
+- `start_challenge` — user stakes SOL into PDA escrow vault
+- `submit_sleep` — oracle signs on-chain after verifying Health Connect data
+- `complete_challenge` — oracle marks challenge won (all days met)
+- `fail_challenge` — oracle closes failed challenge, SOL moves to pool PDA
+- `claim_reward` — user claims stake back + proportional share of the pool
+
+This means: even if HeyNeuron disappears, your SOL is safe in the program vault. No admin key, no rug.
 
 ---
 
@@ -82,7 +87,7 @@ This means: even if HeyNeuron disappears, your SOL is safe in the program vault.
 | Wallet | `@solana-mobile/mobile-wallet-adapter-protocol` |
 | On-chain | Anchor 0.32, Solana devnet |
 | Sleep tracking | `react-native-health-connect` (Android, Health Connect only) |
-| Oracle/Backend | Expo API Routes (serverless) |
+| Oracle/Backend | Next.js API Routes on Vercel (`sleepfi-api.vercel.app`) |
 | Database | Neon Postgres — leaderboard + sleep record history |
 | UI | Reanimated 4, Phosphor icons, custom dark theme |
 | Fonts | Syne 700, DM Sans, JetBrains Mono |

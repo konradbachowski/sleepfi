@@ -3,8 +3,9 @@ import { Challenge, getActiveChallenge, createChallenge, logSleep } from '../lib
 import { useWallet } from './useWallet';
 
 export function useChallenge() {
-  const { user } = useWallet();
+  const { user, walletAddress } = useWallet();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [challengeIdOnChain, setChallengeIdOnChain] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,8 +31,14 @@ export function useChallenge() {
     durationDays: number;
     stakeLamports: number;
     stakeTxSignature: string;
+    challengeIdOnChain?: number;
   }) => {
     if (!user?.id) throw new Error('Not connected');
+
+    if (data.challengeIdOnChain !== undefined) {
+      setChallengeIdOnChain(data.challengeIdOnChain);
+    }
+
     let newChallenge: Challenge;
     try {
       newChallenge = await createChallenge({ userId: user.id, ...data });
@@ -72,6 +79,8 @@ export function useChallenge() {
         userId: user.id,
         challengeId: challenge.id,
         goalHours: challenge.goal_hours,
+        walletAddress: walletAddress ?? undefined,
+        challengeIdOnChain: challengeIdOnChain ?? undefined,
         ...sleepData,
       });
       await fetchChallenge();
@@ -84,10 +93,11 @@ export function useChallenge() {
         days_logged: prev.days_logged + 1,
       } : prev);
     }
-  }, [user?.id, challenge, fetchChallenge]);
+  }, [user?.id, walletAddress, challenge, challengeIdOnChain, fetchChallenge]);
 
   return {
     challenge,
+    challengeIdOnChain,
     loading,
     error,
     fetchChallenge,

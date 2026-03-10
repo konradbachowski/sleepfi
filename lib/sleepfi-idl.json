@@ -1,0 +1,747 @@
+{
+  "address": "Gq6HZCUkXhznL8BBfEVXwnB4BCyzfvhpu4CwYe86wUuD",
+  "metadata": {
+    "name": "sleepfi",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "SleepFi - Sleep-to-Earn on Solana"
+  },
+  "instructions": [
+    {
+      "name": "claim_reward",
+      "docs": [
+        "User claims their stake back after a completed challenge (v1: stake only)."
+      ],
+      "discriminator": [
+        149,
+        95,
+        181,
+        242,
+        94,
+        90,
+        158,
+        162
+      ],
+      "accounts": [
+        {
+          "name": "challenge_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  104,
+                  97,
+                  108,
+                  108,
+                  101,
+                  110,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "arg",
+                "path": "challenge_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "challenge_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "complete_challenge",
+      "docs": [
+        "Oracle marks challenge as completed (all days met)."
+      ],
+      "discriminator": [
+        91,
+        147,
+        166,
+        187,
+        72,
+        3,
+        55,
+        209
+      ],
+      "accounts": [
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "challenge_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  104,
+                  97,
+                  108,
+                  108,
+                  101,
+                  110,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "challenge_escrow.user",
+                "account": "ChallengeEscrow"
+              },
+              {
+                "kind": "arg",
+                "path": "challenge_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_challenge_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "fail_challenge",
+      "docs": [
+        "Oracle marks challenge as failed; stake goes to Pool (5% fee + 95% prize pool)."
+      ],
+      "discriminator": [
+        142,
+        224,
+        182,
+        53,
+        27,
+        104,
+        80,
+        198
+      ],
+      "accounts": [
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "challenge_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  104,
+                  97,
+                  108,
+                  108,
+                  101,
+                  110,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "challenge_escrow.user",
+                "account": "ChallengeEscrow"
+              },
+              {
+                "kind": "arg",
+                "path": "challenge_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_challenge_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_pool",
+      "docs": [
+        "One-time setup: initialize the global Pool PDA."
+      ],
+      "discriminator": [
+        95,
+        180,
+        10,
+        172,
+        84,
+        174,
+        232,
+        40
+      ],
+      "accounts": [
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "oracle"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "start_challenge",
+      "docs": [
+        "User starts a sleep challenge by staking SOL.",
+        "The client must pass `challenge_id = user_state.challenge_count` (read off-chain before calling)."
+      ],
+      "discriminator": [
+        241,
+        96,
+        253,
+        187,
+        177,
+        158,
+        16,
+        122
+      ],
+      "accounts": [
+        {
+          "name": "user_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "challenge_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  104,
+                  97,
+                  108,
+                  108,
+                  101,
+                  110,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "arg",
+                "path": "challenge_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "challenge_id",
+          "type": "u64"
+        },
+        {
+          "name": "goal_hours",
+          "type": "u8"
+        },
+        {
+          "name": "duration_days",
+          "type": "u8"
+        },
+        {
+          "name": "stake_lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "submit_sleep",
+      "docs": [
+        "Oracle submits a completed sleep day for a challenge."
+      ],
+      "discriminator": [
+        123,
+        46,
+        121,
+        116,
+        214,
+        90,
+        157,
+        49
+      ],
+      "accounts": [
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "challenge_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  104,
+                  97,
+                  108,
+                  108,
+                  101,
+                  110,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "challenge_escrow.user",
+                "account": "ChallengeEscrow"
+              },
+              {
+                "kind": "arg",
+                "path": "challenge_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_challenge_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_oracle",
+      "docs": [
+        "Update oracle pubkey (only authority)."
+      ],
+      "discriminator": [
+        112,
+        41,
+        209,
+        18,
+        248,
+        226,
+        252,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "pool"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_oracle",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_fees",
+      "docs": [
+        "Authority withdraws accumulated platform fees."
+      ],
+      "discriminator": [
+        198,
+        212,
+        171,
+        109,
+        144,
+        215,
+        174,
+        89
+      ],
+      "accounts": [
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ChallengeEscrow",
+      "discriminator": [
+        72,
+        143,
+        164,
+        134,
+        26,
+        180,
+        123,
+        184
+      ]
+    },
+    {
+      "name": "Pool",
+      "discriminator": [
+        241,
+        154,
+        109,
+        4,
+        17,
+        177,
+        109,
+        188
+      ]
+    },
+    {
+      "name": "UserState",
+      "discriminator": [
+        72,
+        177,
+        85,
+        249,
+        76,
+        167,
+        186,
+        126
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidGoalHours",
+      "msg": "Invalid goal hours (must be 1-24)"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidDuration",
+      "msg": "Invalid duration (must be 1-365 days)"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidStake",
+      "msg": "Stake must be greater than zero"
+    },
+    {
+      "code": 6003,
+      "name": "ChallengeNotActive",
+      "msg": "Challenge is not active"
+    },
+    {
+      "code": 6004,
+      "name": "ChallengeNotCompleted",
+      "msg": "Challenge is not completed"
+    },
+    {
+      "code": 6005,
+      "name": "GoalNotMet",
+      "msg": "Sleep goal not yet met"
+    },
+    {
+      "code": 6006,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: caller is not the oracle or authority"
+    },
+    {
+      "code": 6007,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6008,
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds in account"
+    },
+    {
+      "code": 6009,
+      "name": "NoFeesToWithdraw",
+      "msg": "No platform fees to withdraw"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidChallengeId",
+      "msg": "Challenge ID must match user's current challenge count"
+    }
+  ],
+  "types": [
+    {
+      "name": "ChallengeEscrow",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "challenge_id",
+            "type": "u64"
+          },
+          {
+            "name": "goal_hours",
+            "type": "u8"
+          },
+          {
+            "name": "duration_days",
+            "type": "u8"
+          },
+          {
+            "name": "days_completed",
+            "type": "u8"
+          },
+          {
+            "name": "stake_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "ChallengeStatus"
+              }
+            }
+          },
+          {
+            "name": "started_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ChallengeStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Completed"
+          },
+          {
+            "name": "Failed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "platform_fee_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "oracle",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "challenge_count",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
