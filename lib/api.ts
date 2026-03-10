@@ -1,4 +1,4 @@
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://sleepfi-api.vercel.app';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8081';
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
