@@ -1,11 +1,11 @@
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Alert, TextInput,
+  StyleSheet, Alert, Linking,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { Moon, ArrowLeft, CheckCircle, Heartbeat, Warning } from 'phosphor-react-native';
+import { Moon, ArrowLeft, CheckCircle, Heartbeat, Warning, ArrowSquareOut } from 'phosphor-react-native';
 import { useWallet } from '../../hooks/useWallet';
 import { useChallenge } from '../../hooks/useChallenge';
 import { useSleep } from '../../hooks/useSleep';
@@ -22,34 +22,28 @@ const DANGER = '#f87171';
 export default function LogSleepScreen() {
   const { user } = useWallet();
   const { challenge, submitSleep } = useChallenge();
-  const { fetchFromHealthConnect, calculateManual, data, loading, error } = useSleep();
+  const { fetchFromHealthConnect, data, loading, error } = useSleep();
   const [submitting, setSubmitting] = useState(false);
-  const [showManual, setShowManual] = useState(false);
-  const [bedtimeStr, setBedtimeStr] = useState('23:00');
-  const [wakeStr, setWakeStr] = useState('06:30');
 
-  // Auto-fetch on mount
   useEffect(() => {
     fetchFromHealthConnect();
   }, []);
 
-  const handleManualSubmit = () => {
-    const [bH, bM] = bedtimeStr.split(':').map(Number);
-    const [wH, wM] = wakeStr.split(':').map(Number);
-    if (isNaN(bH) || isNaN(bM) || isNaN(wH) || isNaN(wM)) {
-      Alert.alert('Invalid time', 'Use HH:MM format e.g. 23:00');
-      return;
-    }
-    const bedtime = new Date();
-    bedtime.setHours(bH, bM, 0, 0);
-    const wakeTime = new Date();
-    wakeTime.setHours(wH, wM, 0, 0);
-    calculateManual(bedtime, wakeTime);
-    setShowManual(false);
-  };
-
-  const goalHours = 7;
+  const goalHours = challenge?.goal_hours ?? 7;
   const metGoal = data && data.durationHours >= goalHours;
+  const permissionDenied = !!error && error.toLowerCase().includes('denied');
+
+  const handleOpenHealthConnect = () => {
+    // Open Health Connect app to grant permissions
+    Linking.openURL('package:com.google.android.apps.healthdata').catch(() => {
+      Linking.openURL('market://details?id=com.google.android.apps.healthdata').catch(() => {
+        Alert.alert(
+          'Open Health Connect',
+          'Install Health Connect from the Play Store, then come back and tap Refresh.',
+        );
+      });
+    });
+  };
 
   const handleLog = async () => {
     if (!challenge || !user) {
@@ -57,7 +51,7 @@ export default function LogSleepScreen() {
       return;
     }
     if (!data) {
-      Alert.alert('No data', 'Health Connect data not available. Make sure you have a sleep tracker connected.');
+      Alert.alert('No data', 'No sleep data available.');
       return;
     }
 
@@ -111,73 +105,28 @@ export default function LogSleepScreen() {
       </Animated.View>
 
       {/* No HC data warning */}
-      {!loading && !data && (
+      {!loading && !data && !permissionDenied && (
         <Animated.View entering={FadeInDown.delay(220).springify()} style={styles.warningCard}>
           <Warning size={18} color={ACCENT} weight="fill" />
           <Text style={styles.warningText}>
-            No sleep session found. Make sure you have Samsung Health, Sleep as Android, or another Health Connect app installed and tracking your sleep.
+            No sleep session found. Make sure Samsung Health, Sleep as Android, or another Health Connect app is tracking your sleep.
           </Text>
         </Animated.View>
       )}
 
-      {error && (
-        <Animated.View entering={FadeInDown.delay(220).springify()} style={styles.warningCard}>
-          <Warning size={18} color={DANGER} weight="fill" />
-          <Text style={[styles.warningText, { color: DANGER }]}>{error}</Text>
-        </Animated.View>
-      )}
-
-      {/* Grant permission CTA */}
-      {error && error.toLowerCase().includes('denied') && (
-        <Animated.View entering={FadeInDown.springify()} style={styles.permissionCard}>
-          <Text style={styles.permissionTitle}>Health Connect Access Required</Text>
+      {/* Permission denied — open HC settings */}
+      {permissionDenied && (
+        <Animated.View entering={FadeInDown.delay(220).springify()} style={styles.permissionCard}>
+          <Text style={styles.permissionTitle}>Permission Required</Text>
           <Text style={styles.permissionText}>
-            SleepFi needs access to your sleep data from Health Connect.
-            Make sure Health Connect is installed and grant permission.
+            Open Health Connect, go to App permissions → SleepFi → enable Sleep.
           </Text>
-          <TouchableOpacity onPress={fetchFromHealthConnect} style={styles.permissionBtn}>
-            <Heartbeat size={18} color={BG} weight="fill" />
-            <Text style={styles.permissionBtnText}>Grant Access</Text>
+          <TouchableOpacity onPress={handleOpenHealthConnect} style={styles.permissionBtn}>
+            <ArrowSquareOut size={18} color={BG} weight="fill" />
+            <Text style={styles.permissionBtnText}>Open Health Connect</Text>
           </TouchableOpacity>
-        </Animated.View>
-      )}
-
-      {/* Manual fallback */}
-      <Animated.View entering={FadeInDown.delay(300).springify()}>
-        <TouchableOpacity
-          onPress={() => setShowManual(!showManual)}
-          style={styles.manualToggle}
-        >
-          <Text style={styles.manualToggleText}>
-            {showManual ? 'Hide manual entry' : 'Enter sleep time manually'}
-          </Text>
-        </TouchableOpacity>
-      </Animated.View>
-
-      {showManual && (
-        <Animated.View entering={FadeInDown.springify()} style={styles.manualCard}>
-          <Text style={styles.manualLabel}>Bedtime (HH:MM)</Text>
-          <TextInput
-            style={styles.manualInput}
-            value={bedtimeStr}
-            onChangeText={setBedtimeStr}
-            placeholder="23:00"
-            placeholderTextColor={GRAY}
-            keyboardType="numeric"
-            maxLength={5}
-          />
-          <Text style={styles.manualLabel}>Wake time (HH:MM)</Text>
-          <TextInput
-            style={styles.manualInput}
-            value={wakeStr}
-            onChangeText={setWakeStr}
-            placeholder="06:30"
-            placeholderTextColor={GRAY}
-            keyboardType="numeric"
-            maxLength={5}
-          />
-          <TouchableOpacity onPress={handleManualSubmit} style={styles.manualBtn}>
-            <Text style={styles.manualBtnText}>Use this data</Text>
+          <TouchableOpacity onPress={fetchFromHealthConnect} style={styles.retryAfterBtn}>
+            <Text style={styles.retryAfterText}>I granted it — Retry</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -202,7 +151,7 @@ export default function LogSleepScreen() {
             <Text style={[styles.goalText, { color: metGoal ? SUCCESS : DANGER }]}>
               {metGoal
                 ? `Goal met — streak continues`
-                : `${(goalHours - data.durationHours).toFixed(1)}h below 7h goal — streak broken`}
+                : `${(goalHours - data.durationHours).toFixed(1)}h below ${goalHours}h goal`}
             </Text>
           </View>
         </Animated.View>
@@ -260,6 +209,20 @@ const styles = StyleSheet.create({
   },
   warningText: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY, flex: 1, lineHeight: 18 },
 
+  permissionCard: {
+    backgroundColor: 'rgba(252,194,49,0.08)', borderRadius: 20, padding: 20,
+    borderWidth: 1, borderColor: 'rgba(252,194,49,0.25)', gap: 12,
+  },
+  permissionTitle: { fontFamily: 'Syne_700Bold', fontSize: 16, color: WHITE },
+  permissionText: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY_L, lineHeight: 18 },
+  permissionBtn: {
+    backgroundColor: ACCENT, borderRadius: 12, paddingVertical: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+  },
+  permissionBtnText: { fontFamily: 'Syne_700Bold', fontSize: 15, color: BG },
+  retryAfterBtn: { alignItems: 'center', paddingVertical: 8 },
+  retryAfterText: { fontFamily: 'DMSans_500Medium', fontSize: 14, color: GRAY_L, textDecorationLine: 'underline' },
+
   durationCard: {
     backgroundColor: CARD, borderRadius: 20, padding: 20,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
@@ -287,35 +250,4 @@ const styles = StyleSheet.create({
   },
   logButtonDisabled: { opacity: 0.4 },
   logButtonText: { fontFamily: 'Syne_700Bold', fontSize: 16, color: BG },
-
-  permissionCard: {
-    backgroundColor: 'rgba(252,194,49,0.08)', borderRadius: 20, padding: 20,
-    borderWidth: 1, borderColor: 'rgba(252,194,49,0.25)', gap: 12,
-  },
-  permissionTitle: { fontFamily: 'Syne_700Bold', fontSize: 16, color: WHITE },
-  permissionText: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: GRAY_L, lineHeight: 18 },
-  permissionBtn: {
-    backgroundColor: ACCENT, borderRadius: 12, paddingVertical: 14,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-  },
-  permissionBtnText: { fontFamily: 'Syne_700Bold', fontSize: 15, color: BG },
-  manualToggle: { alignItems: 'center', paddingVertical: 8 },
-  manualToggleText: { fontFamily: 'DMSans_500Medium', fontSize: 14, color: GRAY_L, textDecorationLine: 'underline' },
-  manualCard: {
-    backgroundColor: CARD, borderRadius: 20, padding: 20,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', gap: 8,
-  },
-  manualLabel: { fontFamily: 'DMSans_500Medium', fontSize: 13, color: GRAY_L },
-  manualInput: {
-    backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 14,
-    fontFamily: 'JetBrainsMono_400Regular', fontSize: 20, color: WHITE,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-    textAlign: 'center',
-  },
-  manualBtn: {
-    backgroundColor: 'rgba(252,194,49,0.12)', borderRadius: 12,
-    paddingVertical: 14, alignItems: 'center', marginTop: 4,
-    borderWidth: 1, borderColor: 'rgba(252,194,49,0.2)',
-  },
-  manualBtnText: { fontFamily: 'DMSans_500Medium', fontSize: 15, color: ACCENT },
 });
