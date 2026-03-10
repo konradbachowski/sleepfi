@@ -22,7 +22,7 @@ const DANGER = '#f87171';
 export default function LogSleepScreen() {
   const { user } = useWallet();
   const { challenge, submitSleep } = useChallenge();
-  const { fetchFromHealthConnect, data, loading, error } = useSleep();
+  const { fetchFromHealthConnect, requestPermissions, data, loading, error } = useSleep();
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -121,12 +121,12 @@ export default function LogSleepScreen() {
           <Text style={styles.permissionText}>
             Open Health Connect, go to App permissions → SleepFi → enable Sleep.
           </Text>
-          <TouchableOpacity onPress={handleOpenHealthConnect} style={styles.permissionBtn}>
-            <ArrowSquareOut size={18} color={BG} weight="fill" />
-            <Text style={styles.permissionBtnText}>Open Health Connect</Text>
+          <TouchableOpacity onPress={requestPermissions} style={styles.permissionBtn}>
+            <Heartbeat size={18} color={BG} weight="fill" />
+            <Text style={styles.permissionBtnText}>Grant Access</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={fetchFromHealthConnect} style={styles.retryAfterBtn}>
-            <Text style={styles.retryAfterText}>I granted it — Retry</Text>
+          <TouchableOpacity onPress={handleOpenHealthConnect} style={styles.retryAfterBtn}>
+            <Text style={styles.retryAfterText}>Open Health Connect app</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
