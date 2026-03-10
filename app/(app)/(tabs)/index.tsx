@@ -11,11 +11,11 @@ import { useEffect, useCallback } from 'react';
 import { router } from 'expo-router';
 import {
   Moon, Lightning, Plus, ArrowRight,
-  CheckCircle, Flame, Trophy,
+  CheckCircle, Flame, Trophy, UserCircle,
 } from 'phosphor-react-native';
-import { useWallet } from '../../hooks/useWallet';
-import { useChallenge } from '../../hooks/useChallenge';
-import { lamportsToSol, shortenAddress } from '../../lib/solana';
+import { useWallet } from '../../../hooks/useWallet';
+import { useChallenge } from '../../../hooks/useChallenge';
+import { lamportsToSol, shortenAddress } from '../../../lib/solana';
 
 const BG = '#0d1520';
 const CARD = '#141e2e';
@@ -134,9 +134,9 @@ export default function DashboardScreen() {
           )}
           <TouchableOpacity
             style={styles.leaderboardBtn}
-            onPress={() => router.push('/(app)/leaderboard')}
+            onPress={() => router.push('/(app)/profile')}
           >
-            <Trophy size={18} color={ACCENT} weight="fill" />
+            <UserCircle size={18} color={ACCENT} weight="fill" />
           </TouchableOpacity>
         </View>
       </Animated.View>

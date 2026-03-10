@@ -19,6 +19,11 @@ export default function AppLayout() {
         contentStyle: { backgroundColor: '#0d1520' },
         animation: 'fade_from_bottom',
       }}
-    />
+    >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="challenge" options={{ headerShown: false }} />
+      <Stack.Screen name="log-sleep" options={{ headerShown: false }} />
+      <Stack.Screen name="profile" options={{ headerShown: false, presentation: 'modal' }} />
+    </Stack>
   );
 }
