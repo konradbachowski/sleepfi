@@ -71,7 +71,7 @@ export default function LogSleepScreen() {
         durationHours: data.durationHours,
         source: 'health_connect',
       });
-      router.replace('/(app)/dashboard');
+      router.replace('/(app)/(tabs)');
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'Failed to log sleep');
     } finally {

@@ -84,7 +84,7 @@ export default function ChallengeScreen() {
       });
 
       await scheduleSleepReminder();
-      router.replace('/(app)/dashboard');
+      router.replace('/(app)/(tabs)');
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'Failed to start challenge');
     } finally {

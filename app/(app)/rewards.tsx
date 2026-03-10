@@ -50,7 +50,7 @@ export default function RewardsScreen() {
         Alert.alert(
           'Rewards Claimed!',
           `${result.payoutSol} SOL sent to your wallet.\nTx: ${result.signature?.slice(0, 20)}...`,
-          [{ text: 'Sweet', onPress: () => router.replace('/(app)/dashboard') }]
+          [{ text: 'Sweet', onPress: () => router.replace('/(app)/(tabs)') }]
         );
       } else {
         Alert.alert('Challenge Failed', result.message);

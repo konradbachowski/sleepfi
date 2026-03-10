@@ -84,7 +84,7 @@ export default function WelcomeScreen() {
     );
     try {
       await connect();
-      router.replace('/(app)/dashboard');
+      router.replace('/(app)/(tabs)');
     } catch {}
   };
 
