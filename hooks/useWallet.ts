@@ -82,7 +82,9 @@ export function useWallet() {
       const result = await wallet.signAndSendTransactions({
         transactions: [transaction],
       });
-      return Buffer.from(result.signatures[0]).toString('base64');
+      // signatures[0] is Uint8Array — encode as base58 (Solana standard)
+      const bs58 = require('bs58');
+      return bs58.encode(result.signatures[0]);
     });
   }, []);
 

@@ -38,42 +38,40 @@ export async function requestSleepPermission(): Promise<boolean> {
 }
 
 export async function getLastNightSleep(): Promise<SleepData | null> {
-  try {
-    await initialize();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(18, 0, 0, 0); // from 6pm yesterday
+  await initialize();
 
-    const todayNoon = new Date();
-    todayNoon.setHours(14, 0, 0, 0); // to 2pm today
+  // Wide window: noon 2 days ago → noon today (covers any sleep tracker timezone offset)
+  const from = new Date();
+  from.setDate(from.getDate() - 2);
+  from.setHours(12, 0, 0, 0);
 
-    const { records } = await readRecords('SleepSession', {
-      timeRangeFilter: {
-        operator: 'between',
-        startTime: yesterday.toISOString(),
-        endTime: todayNoon.toISOString(),
-      },
-    });
+  const to = new Date();
+  to.setHours(14, 0, 0, 0);
 
-    if (!records || !records.length) return null;
+  const { records } = await readRecords('SleepSession', {
+    timeRangeFilter: {
+      operator: 'between',
+      startTime: from.toISOString(),
+      endTime: to.toISOString(),
+    },
+  });
 
-    const longest = (records as any[]).reduce((a, b) => {
-      const aDur = new Date(a.endTime).getTime() - new Date(a.startTime).getTime();
-      const bDur = new Date(b.endTime).getTime() - new Date(b.startTime).getTime();
-      return aDur > bDur ? a : b;
-    });
+  if (!records || !records.length) return null;
 
-    const durationMs =
-      new Date(longest.endTime).getTime() - new Date(longest.startTime).getTime();
-    const durationHours = Math.round((durationMs / (1000 * 60 * 60)) * 10) / 10;
+  const longest = (records as any[]).reduce((a, b) => {
+    const aDur = new Date(a.endTime).getTime() - new Date(a.startTime).getTime();
+    const bDur = new Date(b.endTime).getTime() - new Date(b.startTime).getTime();
+    return aDur > bDur ? a : b;
+  });
 
-    return {
-      startTime: longest.startTime,
-      endTime: longest.endTime,
-      durationHours,
-      source: 'health_connect',
-    };
-  } catch {
-    return null;
-  }
+  const durationMs =
+    new Date(longest.endTime).getTime() - new Date(longest.startTime).getTime();
+  const durationHours = Math.round((durationMs / (1000 * 60 * 60)) * 10) / 10;
+
+  return {
+    startTime: longest.startTime,
+    endTime: longest.endTime,
+    durationHours,
+    source: 'health_connect',
+  };
 }

@@ -31,7 +31,7 @@ export default function LogSleepScreen() {
 
   const goalHours = challenge?.goal_hours ?? 7;
   const metGoal = data && data.durationHours >= goalHours;
-  const permissionDenied = !!error && error.toLowerCase().includes('denied');
+  const permissionDenied = error === 'denied';
 
   const handleOpenHealthConnect = () => {
     // Open Health Connect app to grant permissions
@@ -91,10 +91,12 @@ export default function LogSleepScreen() {
           <Text style={styles.hcTitle}>Health Connect</Text>
           <Text style={styles.hcSub}>
             {loading
-              ? 'Reading last night\'s sleep...'
+              ? 'Reading sleep data...'
               : data
-              ? 'Sleep data loaded'
-              : 'No data found for last night'}
+              ? `Sleep data loaded — ${data.durationHours}h`
+              : error && !permissionDenied
+              ? error
+              : 'No data found for last 2 nights'}
           </Text>
         </View>
         {!loading && (

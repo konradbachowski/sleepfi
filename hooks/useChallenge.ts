@@ -14,7 +14,8 @@ export function useChallenge() {
     setLoading(true);
     try {
       const data = await getActiveChallenge(user.id);
-      setChallenge(data);
+      // Only update if API returned something — don't wipe local challenge with null
+      if (data !== null) setChallenge(data);
     } catch (e: any) {
       setError(e?.message || 'Failed to load challenge');
     } finally {

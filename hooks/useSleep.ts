@@ -20,14 +20,19 @@ export function useSleep() {
     try {
       const sleepData = await getLastNightSleep();
       if (!sleepData) {
-        setError('No sleep data found. Grant Health Connect access first.');
+        setError('No sleep data found for last 2 nights. Make sure your tracker synced to Health Connect.');
         return null;
       }
       const entry: SleepEntry = { ...sleepData };
       setData(entry);
       return entry;
     } catch (e: any) {
-      setError('Health Connect permission denied');
+      const msg = e?.message || '';
+      if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('security')) {
+        setError('denied');
+      } else {
+        setError(msg || 'Health Connect error');
+      }
       return null;
     } finally {
       setLoading(false);
