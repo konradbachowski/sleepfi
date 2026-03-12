@@ -40,13 +40,17 @@ export async function requestSleepPermission(): Promise<boolean> {
 export async function getLastNightSleep(): Promise<SleepData | null> {
   await initialize();
 
-  // Wide window: noon 2 days ago → noon today (covers any sleep tracker timezone offset)
+  // Window: 6pm yesterday → noon today
   const from = new Date();
-  from.setDate(from.getDate() - 2);
-  from.setHours(12, 0, 0, 0);
+  from.setDate(from.getDate() - 1);
+  from.setHours(18, 0, 0, 0);
 
   const to = new Date();
   to.setHours(14, 0, 0, 0);
+
+  // If "to" is before "from" (i.e. it's before 6pm and we set yesterday 6pm),
+  // extend to to end of today
+  if (to <= from) to.setHours(23, 59, 59, 0);
 
   const { records } = await readRecords('SleepSession', {
     timeRangeFilter: {
@@ -58,7 +62,16 @@ export async function getLastNightSleep(): Promise<SleepData | null> {
 
   if (!records || !records.length) return null;
 
-  const longest = (records as any[]).reduce((a, b) => {
+  // Filter out junk: sessions under 30min or over 12h
+  const valid = (records as any[]).filter(r => {
+    const ms = new Date(r.endTime).getTime() - new Date(r.startTime).getTime();
+    return ms >= 30 * 60 * 1000 && ms <= 12 * 60 * 60 * 1000;
+  });
+
+  if (!valid.length) return null;
+
+  // Pick the longest valid session
+  const longest = valid.reduce((a, b) => {
     const aDur = new Date(a.endTime).getTime() - new Date(a.startTime).getTime();
     const bDur = new Date(b.endTime).getTime() - new Date(b.startTime).getTime();
     return aDur > bDur ? a : b;

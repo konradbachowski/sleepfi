@@ -53,38 +53,48 @@ function BreathingStreak({ value }: { value: number }) {
   );
 }
 
-function SleepBar({ day, hours, goal, index }: {
+function SleepBar({ day, hours, goal, index, miss }: {
   day: string;
   hours: number | null;
   goal: number;
   index: number;
+  miss?: boolean;
 }) {
   const maxHours = 10;
   const fillRatio = hours ? Math.min(hours / maxHours, 1) : 0;
   const metGoal = hours !== null && hours >= goal;
-  const barWidth = (width - 56 - 48) * fillRatio; // content width * ratio
+  const barWidth = (width - 56 - 48) * fillRatio;
 
   return (
     <Animated.View entering={FadeInRight.delay(index * 60).springify()} style={styles.barRow}>
       <Text style={styles.barDay}>{day}</Text>
       <View style={styles.barTrack}>
         {hours !== null ? (
-          <View
-            style={[
-              styles.barFill,
-              { width: barWidth, backgroundColor: metGoal ? SUCCESS : DANGER },
-            ]}
-          />
+          <View style={[styles.barFill, { width: barWidth, backgroundColor: metGoal ? SUCCESS : DANGER }]} />
+        ) : miss ? (
+          <View style={[styles.barFill, { width: 20, backgroundColor: DANGER, opacity: 0.4 }]} />
         ) : null}
       </View>
-      <Text style={styles.barHours}>
-        {hours !== null ? `${hours}h` : '--'}
+      <Text style={[styles.barHours, miss && !hours ? { color: DANGER, opacity: 0.5 } : null]}>
+        {hours !== null ? `${hours}h` : miss ? 'miss' : '--'}
       </Text>
     </Animated.View>
   );
 }
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// Returns last N dates as { dateStr: 'YYYY-MM-DD', label: 'Mon' }
+function getLastNDays(n: number) {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (n - 1 - i));
+    return {
+      dateStr: d.toISOString().split('T')[0],
+      label: SHORT_DAYS[d.getDay()],
+    };
+  });
+}
 
 export default function DashboardScreen() {
   const { walletAddress, user } = useWallet();
@@ -100,14 +110,27 @@ export default function DashboardScreen() {
     : 0;
   const stakedSol = challenge ? lamportsToSol(challenge.stake_lamports) : '0';
 
-  // Build last 7 days bar data from sleep_records
-  const sleepBars = DAY_LABELS.map((day, i) => {
-    if (!challenge?.sleep_records) return { day, hours: null };
-    const record = challenge.sleep_records[challenge.sleep_records.length - 1 - i];
-    return { day, hours: record ? Number(record.duration_hours) : null };
-  }).reverse();
+  // Build last 7 days using real calendar dates
+  const last7 = getLastNDays(7);
+  const recordsByDate = new Map(
+    (challenge?.sleep_records ?? []).map((r: any) => [r.date?.slice(0, 10), r])
+  );
 
-  const todayLogged = challenge?.sleep_records?.[0] != null;
+  // A day is a "miss" if: challenge is active, the day has passed, and no record exists
+  const challengeStart = challenge ? new Date(challenge.started_at) : null;
+  const today = new Date().toISOString().split('T')[0];
+
+  const sleepBars = last7.map(({ dateStr, label }) => {
+    const record = recordsByDate.get(dateStr);
+    if (record) return { day: label, hours: Number(record.duration_hours), miss: false };
+    // Past day within active challenge with no record = miss
+    const isPast = dateStr < today;
+    const afterStart = challengeStart ? dateStr >= challengeStart.toISOString().split('T')[0] : false;
+    const miss = isPast && !!challenge && afterStart;
+    return { day: label, hours: null, miss };
+  });
+
+  const todayLogged = !!recordsByDate.get(today);
 
   return (
     <ScrollView
@@ -201,11 +224,12 @@ export default function DashboardScreen() {
           <View style={styles.barsContainer}>
             {sleepBars.map((bar, i) => (
               <SleepBar
-                key={bar.day}
+                key={`${bar.day}-${i}`}
                 day={bar.day}
                 hours={bar.hours}
                 goal={challenge.goal_hours}
                 index={i}
+                miss={bar.miss}
               />
             ))}
           </View>
